@@ -10,8 +10,11 @@ import {
   Title,
   Tooltip,
   Legend,
+  ChartData, 
+  TooltipItem 
 } from 'chart.js';
-import { Bar, Line, Pie, Doughnut } from 'react-chartjs-2';
+
+import { Bar, Line, Doughnut } from 'react-chartjs-2';
 
 ChartJS.register(
   CategoryScale,
@@ -25,8 +28,14 @@ ChartJS.register(
   Legend
 );
 
+// --- Tipagem Específica dos Dados ---
+type LineChartDataType = ChartData<'line', number[], string>;
+type DoughnutChartDataType = ChartData<'doughnut', number[], string>;
+type BarChartDataType = ChartData<'bar', number[], string>;
+
+
 // Gráfico de Vendas por Período
-export const SalesLineChart: React.FC<{ data: any }> = ({ data }) => {
+export const SalesLineChart: React.FC<{ data: LineChartDataType }> = ({ data }) => {
   const options = {
     responsive: true,
     plugins: {
@@ -42,8 +51,9 @@ export const SalesLineChart: React.FC<{ data: any }> = ({ data }) => {
       y: {
         beginAtZero: true,
         ticks: {
-          callback: function(value: any) {
-            return 'R$ ' + value.toLocaleString('pt-BR');
+          callback: function(value: number | string) {
+            const numericValue = typeof value === 'string' ? parseFloat(value) : value;
+            return 'R$ ' + numericValue.toLocaleString('pt-BR');
           }
         }
       }
@@ -54,7 +64,7 @@ export const SalesLineChart: React.FC<{ data: any }> = ({ data }) => {
 };
 
 // Gráfico de Vendas por Categoria
-export const SalesByCategoryChart: React.FC<{ data: any }> = ({ data }) => {
+export const SalesByCategoryChart: React.FC<{ data: DoughnutChartDataType }> = ({ data }) => {
   const options = {
     responsive: true,
     plugins: {
@@ -67,10 +77,12 @@ export const SalesByCategoryChart: React.FC<{ data: any }> = ({ data }) => {
       },
       tooltip: {
         callbacks: {
-          label: function(context: any) {
+          label: function(context: TooltipItem<'doughnut'>) {
             const label = context.label || '';
             const value = context.parsed;
-            const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+            if (!context.dataset.data) return label;
+            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+            if (total === 0) return `${label}: R$ ${value.toLocaleString('pt-BR')}`;
             const percentage = ((value / total) * 100).toFixed(1);
             return `${label}: R$ ${value.toLocaleString('pt-BR')} (${percentage}%)`;
           }
@@ -83,7 +95,7 @@ export const SalesByCategoryChart: React.FC<{ data: any }> = ({ data }) => {
 };
 
 // Top 5 Produtos Mais Vendidos
-export const TopProductsChart: React.FC<{ data: any }> = ({ data }) => {
+export const TopProductsChart: React.FC<{ data: BarChartDataType }> = ({ data }) => {
   const options = {
     responsive: true,
     indexAxis: 'y' as const,
@@ -100,7 +112,7 @@ export const TopProductsChart: React.FC<{ data: any }> = ({ data }) => {
       x: {
         beginAtZero: true,
         ticks: {
-          callback: function(value: any) {
+          callback: function(value: number | string) {
             return value + ' unid.';
           }
         }

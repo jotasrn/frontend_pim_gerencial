@@ -1,20 +1,21 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth, UserRole } from '../contexts/AuthContext';
-
+import { useAuth, TipoUsuario } from '../contexts/AuthContext'; 
+// A interface agora usa 'permissaoRequerida'
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: UserRole;
+  permissaoRequerida?: TipoUsuario;
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
   children, 
-  requiredRole 
+  permissaoRequerida 
 }) => {
-  const { user, loading, checkRole } = useAuth();
+  // Usamos as variáveis em português do nosso hook
+  const { usuario, carregando, verificarPermissao } = useAuth();
 
-  // Show loading spinner while checking authentication
-  if (loading) {
+  // Mostra um spinner de carregamento enquanto o AuthContext verifica a sessão
+  if (carregando) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
@@ -22,26 +23,26 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // Redirect to login if not authenticated
-  if (!user) {
+  // Se não há usuário após o carregamento, redireciona para a tela de login
+  if (!usuario) {
     return <Navigate to="/login" replace />;
   }
 
-  // Check if user has required role
-  if (requiredRole && !checkRole(requiredRole)) {
-    // Redirect to appropriate dashboard based on user role
-    switch (user.role) {
-      case 'manager':
-        return <Navigate to="/manager" replace />;
-      case 'stockist':
-        return <Navigate to="/stockist" replace />;
-      case 'deliverer':
-        return <Navigate to="/deliverer" replace />;
+  // Se a rota exige uma permissão e o usuário não a possui...
+  if (permissaoRequerida && !verificarPermissao(permissaoRequerida)) {
+    // ...redireciona para o dashboard padrão daquele usuário, evitando o acesso indevido.
+    switch (usuario.permissao) {
+      case 'gerente':
+        return <Navigate to="/gerente" replace />;
+      // O perfil 'entregador' foi removido por enquanto, mas a lógica está aqui para o futuro
+      // case 'entregador':
+      //   return <Navigate to="/entregador" replace />;
       default:
-        return <Navigate to="/dashboard" replace />;
+        // Se por algum motivo o usuário não tiver um dashboard padrão, volta para o login
+        return <Navigate to="/login" replace />;
     }
   }
 
-  // User is authenticated and has required role
+  // Se todas as verificações passaram, exibe o conteúdo da rota
   return <>{children}</>;
 };

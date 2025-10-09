@@ -26,11 +26,7 @@ src/
 
 ## 🔧 Configuração
 
-1. **Clone o repositório**
-```bash
-git clone <url-do-repositorio>
-cd hortifruti-frontend
-```
+
 
 2. **Instale as dependências**
 ```bash
@@ -157,14 +153,3 @@ REACT_APP_API_URL=https://sua-api-producao.com
 - `npm run preview` - Visualiza o build de produção
 - `npm run lint` - Executa o linter
 
-## 🤝 Contribuição
-
-1. Fork o projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
-
-## 📄 Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.

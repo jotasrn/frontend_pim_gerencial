@@ -9,6 +9,8 @@ import {
   Title,
   Tooltip,
   Legend,
+  ChartData,
+  TooltipItem
 } from 'chart.js';
 import { Line, Pie } from 'react-chartjs-2';
 
@@ -23,8 +25,10 @@ ChartJS.register(
   Legend
 );
 
-// Gráfico de Perdas por Motivo
-export const LossByReasonChart: React.FC<{ data: any }> = ({ data }) => {
+type LineChartDataType = ChartData<'line', number[], string>;
+type PieChartDataType = ChartData<'pie', number[], string>;
+
+export const LossByReasonChart: React.FC<{ data: PieChartDataType }> = ({ data }) => {
   const options = {
     responsive: true,
     plugins: {
@@ -37,10 +41,12 @@ export const LossByReasonChart: React.FC<{ data: any }> = ({ data }) => {
       },
       tooltip: {
         callbacks: {
-          label: function(context: any) {
+          label: function(context: TooltipItem<'pie'>) {
             const label = context.label || '';
             const value = context.parsed;
-            const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+            if (!context.dataset.data) return label;
+            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+            if (total === 0) return `${label}: ${value} unid.`;
             const percentage = ((value / total) * 100).toFixed(1);
             return `${label}: ${value} unid. (${percentage}%)`;
           }
@@ -52,8 +58,7 @@ export const LossByReasonChart: React.FC<{ data: any }> = ({ data }) => {
   return <Pie data={data} options={options} />;
 };
 
-// Gráfico de Perdas ao Longo do Tempo
-export const LossOverTimeChart: React.FC<{ data: any }> = ({ data }) => {
+export const LossOverTimeChart: React.FC<{ data: LineChartDataType }> = ({ data }) => {
   const options = {
     responsive: true,
     plugins: {
@@ -69,7 +74,7 @@ export const LossOverTimeChart: React.FC<{ data: any }> = ({ data }) => {
       y: {
         beginAtZero: true,
         ticks: {
-          callback: function(value: any) {
+          callback: function(value: number | string) {
             return value + ' unid.';
           }
         }

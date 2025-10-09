@@ -7,6 +7,7 @@ import {
   Title,
   Tooltip,
   Legend,
+  ChartData
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 
@@ -19,8 +20,10 @@ ChartJS.register(
   Legend
 );
 
-// Gráfico de Produtos por Fornecedor
-export const ProductsBySupplierChart: React.FC<{ data: any }> = ({ data }) => {
+// --- Tipagem Específica dos Dados ---
+type BarChartDataType = ChartData<'bar', number[], string>;
+
+export const ProductsBySupplierChart: React.FC<{ data: BarChartDataType }> = ({ data }) => {
   const options = {
     responsive: true,
     plugins: {
@@ -36,8 +39,13 @@ export const ProductsBySupplierChart: React.FC<{ data: any }> = ({ data }) => {
       y: {
         beginAtZero: true,
         ticks: {
-          callback: function(value: any) {
-            return value + ' produtos';
+          callback: function(value: number | string) {
+            // Garante que o valor é tratado como número antes de concatenar
+            const numericValue = typeof value === 'string' ? parseFloat(value) : value;
+            if (Number.isInteger(numericValue)) {
+              return numericValue + ' produtos';
+            }
+            return value;
           }
         }
       }

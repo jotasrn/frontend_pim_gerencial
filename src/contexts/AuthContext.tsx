@@ -1,122 +1,126 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import api from '../services/api';
 
-// Types
-export type UserRole = 'manager' | 'stockist' | 'deliverer' | 'customer';
+export type TipoUsuario = 'gerente' | 'entregador';
 
-export interface User {
+export interface Usuario {
   id: number;
-  name: string;
+  nome: string;
   email: string;
-  role: UserRole;
+  permissao: TipoUsuario;
 }
 
-interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+interface TipoAuthContext {
+  usuario: Usuario | null;
+  carregando: boolean;
+  login: (email: string, senha: string) => Promise<void>;
   logout: () => void;
-  checkRole: (role: UserRole) => boolean;
+  verificarPermissao: (permissao: TipoUsuario) => boolean;
 }
 
-// Default context value
-const defaultAuthContext: AuthContextType = {
-  user: null,
-  loading: true,
-  login: async () => {},
-  logout: () => {},
-  checkRole: () => false,
-};
+// --- Contexto ---
 
-// Create context
-const AuthContext = createContext<AuthContextType>(defaultAuthContext);
+const AuthContext = createContext<TipoAuthContext>({} as TipoAuthContext);
 
-// Custom hook to use auth context
 export const useAuth = () => useContext(AuthContext);
 
-// Provider component
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+// --- Provedor ---
 
-  // Check if user is already logged in
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [carregando, setCarregando] = useState(true); // Inicia como true para verificar a sessão
+
+  // Verifica se o usuário já tem uma sessão ativa ao carregar o app
   useEffect(() => {
-    const checkAuthStatus = async () => {
-      try {
-        // Simulate API call to check authentication status
-        const storedUser = localStorage.getItem('user');
-        
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
+    const verificarStatusAuth = async () => {
+      const token = localStorage.getItem('token');
+
+      if (token) {
+        // Se temos um token, validamos ele no back-end e buscamos os dados do usuário
+        try {
+          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          const resposta = await api.get('/usuarios/me');
+          
+          const dadosUsuario: Usuario = {
+            id: resposta.data.id,
+            nome: resposta.data.nomeCompleto, // Corrigindo nome do campo
+            email: resposta.data.email,
+            permissao: resposta.data.permissao.toLowerCase() as TipoUsuario, // Convertendo 'GERENTE' para 'gerente'
+          };
+          setUsuario(dadosUsuario);
+        } catch (error) {
+          // Se o token for inválido, limpa tudo
+          console.error('Sessão inválida, limpando token:', error);
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
         }
-      } catch (error) {
-        console.error('Authentication check failed:', error);
-      } finally {
-        setLoading(false);
       }
+      setCarregando(false);
     };
 
-    checkAuthStatus();
+    verificarStatusAuth();
   }, []);
 
-  // Login function
-  const login = async (email: string, password: string) => {
+  // Função de Login conectada à API
+  const login = async (email: string, senha: string) => {
     try {
-      setLoading(true);
+      setCarregando(true);
       
-      // Simulate API call for authentication
-      // In a real application, this would be a fetch call to your backend
-      const response = await new Promise<User>((resolve) => {
-        setTimeout(() => {
-          // Mock users for testing different roles
-          const mockUsers = [
-            { id: 1, name: 'Manager User', email: 'manager@example.com', password: 'password', role: 'manager' as UserRole },
-            { id: 2, name: 'Stockist User', email: 'stockist@example.com', password: 'password', role: 'stockist' as UserRole },
-            { id: 3, name: 'Deliverer User', email: 'deliverer@example.com', password: 'password', role: 'deliverer' as UserRole },
-          ];
-          
-          const user = mockUsers.find(u => u.email === email && u.password === password);
-          
-          if (user) {
-            // Remove password before storing in state
-            const { password, ...userData } = user;
-            resolve(userData as User);
-          } else {
-            throw new Error('Invalid credentials');
-          }
-        }, 500);
-      });
-      
-      // Store user in state and localStorage
-      setUser(response);
-      localStorage.setItem('user', JSON.stringify(response));
-      
+      // 1. Chama o endpoint de login
+      const respostaLogin = await api.post('/auth/login', { email, senha });
+      const { token } = respostaLogin.data;
+
+      if (!token) {
+        throw new Error('Token não recebido da API');
+      }
+
+      // 2. Salva o token e configura no Axios para futuras requisições
+      localStorage.setItem('token', token);
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+      // 3. Busca os dados do usuário com o novo token
+      const respostaUsuario = await api.get('/usuarios/me');
+      const dadosUsuario: Usuario = {
+        id: respostaUsuario.data.id,
+        nome: respostaUsuario.data.nomeCompleto,
+        email: respostaUsuario.data.email,
+        permissao: respostaUsuario.data.permissao.toLowerCase() as TipoUsuario,
+      };
+
+      setUsuario(dadosUsuario);
+      localStorage.setItem('user', JSON.stringify(dadosUsuario));
+
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error('Falha no login:', error);
+      // Garante que tudo seja limpo em caso de erro
+      logout();
       throw error;
     } finally {
-      setLoading(false);
+      setCarregando(false);
     }
   };
 
-  // Logout function
+  // Função de Logout
   const logout = () => {
-    setUser(null);
+    setUsuario(null);
+    localStorage.removeItem('token');
     localStorage.removeItem('user');
+    delete api.defaults.headers.common['Authorization'];
   };
 
-  // Check if user has required role
-  const checkRole = (role: UserRole): boolean => {
-    return user?.role === role;
+  // Verifica a permissão do usuário logado
+  const verificarPermissao = (permissaoRequerida: TipoUsuario): boolean => {
+    return usuario?.permissao === permissaoRequerida;
   };
 
-  // Context value
-  const value = {
-    user,
-    loading,
+  // Valor que será disponibilizado para toda a aplicação
+  const valor = {
+    usuario,
+    carregando,
     login,
     logout,
-    checkRole,
+    verificarPermissao,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;
 };

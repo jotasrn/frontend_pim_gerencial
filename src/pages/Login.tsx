@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Leaf } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { formatApiError } from '../utils/apiHelpers'; // Importe nosso formatador de erros
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -18,11 +19,14 @@ const Login: React.FC = () => {
 
     try {
       await login(email, password);
-      
-      // Redirect based on user role (handled automatically by ProtectedRoute)
+      // O redirecionamento após o login será gerenciado pelo App.tsx
+      // com base na mudança de estado de autenticação.
+      // Apenas navegamos para uma rota "genérica" de dashboard.
       navigate('/dashboard');
     } catch (err) {
-      setError('Falha no login. Verifique seu e-mail e senha.');
+      // Usa nosso formatador para extrair a melhor mensagem de erro
+      const errorMessage = formatApiError(err);
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -45,16 +49,14 @@ const Login: React.FC = () => {
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="bg-red-50 border-l-4 border-red-500 p-4">
-              <p className="text-sm text-red-700">{error}</p>
+            <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4" role="alert">
+              <p>{error}</p>
             </div>
           )}
           
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
-              <label htmlFor="email-address" className="sr-only">
-                Email
-              </label>
+              <label htmlFor="email-address" className="sr-only">Email</label>
               <input
                 id="email-address"
                 name="email"
@@ -68,9 +70,7 @@ const Login: React.FC = () => {
               />
             </div>
             <div>
-              <label htmlFor="password" className="sr-only">
-                Senha
-              </label>
+              <label htmlFor="password" className="sr-only">Senha</label>
               <input
                 id="password"
                 name="password"
@@ -91,31 +91,13 @@ const Login: React.FC = () => {
               disabled={isLoading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-70"
             >
-              {isLoading ? (
+              {isLoading && (
                 <span className="absolute left-0 inset-y-0 flex items-center pl-3">
                   <div className="h-5 w-5 border-t-2 border-white border-solid rounded-full animate-spin"></div>
                 </span>
-              ) : null}
+              )}
               {isLoading ? 'Entrando...' : 'Entrar'}
             </button>
-          </div>
-          
-          <div className="text-sm text-center">
-            <p className="text-gray-600 mb-2">Contas de demonstração:</p>
-            <div className="grid grid-cols-1 gap-2 text-xs text-gray-500">
-              <div className="bg-gray-50 p-2 rounded">
-                <p><strong>Gerente:</strong> manager@example.com</p>
-                <p><strong>Senha:</strong> password</p>
-              </div>
-              <div className="bg-gray-50 p-2 rounded">
-                <p><strong>Estoquista:</strong> stockist@example.com</p>
-                <p><strong>Senha:</strong> password</p>
-              </div>
-              <div className="bg-gray-50 p-2 rounded">
-                <p><strong>Entregador:</strong> deliverer@example.com</p>
-                <p><strong>Senha:</strong> password</p>
-              </div>
-            </div>
           </div>
         </form>
       </div>

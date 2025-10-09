@@ -1,34 +1,28 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const Dashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { usuario } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect based on user role
   useEffect(() => {
-    if (user) {
-      switch (user.role) {
-        case 'manager':
-          navigate('/manager');
-          break;
-        case 'stockist':
-          navigate('/stockist');
-          break;
-        case 'deliverer':
-          navigate('/deliverer');
+    if (usuario) {
+      switch (usuario.permissao) {
+        case 'gerente':
+          navigate('/gerente', { replace: true });
           break;
         default:
-          // If role is not recognized, stay on dashboard
+          navigate('/login', { replace: true });
           break;
       }
     }
-  }, [user, navigate]);
+  }, [usuario, navigate]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+      <LoadingSpinner text="Redirecionando..." />
     </div>
   );
 };
