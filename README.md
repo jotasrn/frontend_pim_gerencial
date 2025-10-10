@@ -35,7 +35,7 @@ npm install
 
 3. **Configure as variáveis de ambiente**
 ```bash
-cp .env.example .env
+.env
 ```
 
 Edite o arquivo `.env` com a URL do seu back-end:
@@ -51,12 +51,6 @@ npm run dev
 ## 🔐 Autenticação
 
 O sistema utiliza JWT (JSON Web Token) para autenticação. O token é armazenado no localStorage e automaticamente incluído nas requisições através dos interceptors do Axios.
-
-### Usuários de Demonstração
-
-- **Gerente**: manager@example.com / password
-- **Estoquista**: stockist@example.com / password  
-- **Entregador**: deliverer@example.com / password
 
 ## 📡 Integração com API
 
@@ -84,29 +78,6 @@ O arquivo `src/services/api.js` contém a configuração base do Axios:
 - **useProdutos**: Gerenciamento de estado dos produtos
 - **useCategorias**: Gerenciamento de estado das categorias
 - **useEntregas**: Gerenciamento de estado das entregas
-
-## 🎯 Funcionalidades por Perfil
-
-### Gerente
-- Dashboard com métricas gerais
-- Gerenciamento de usuários
-- Gerenciamento de produtos
-- Gerenciamento de promoções
-- Lista de clientes
-- Associação de entregadores
-
-### Estoquista
-- Dashboard com métricas de estoque
-- Perfil pessoal
-- Cadastro de produtos
-- Controle de estoque
-- Registro de perdas
-
-### Entregador
-- Dashboard com entregas do dia
-- Lista de entregas pessoais
-- Atualização de status das entregas
-- Detalhes das entregas
 
 ## 🛠️ Utilitários
 
