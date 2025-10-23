@@ -44,7 +44,7 @@ export const estoqueService = {
   listarEstoqueBaixo: async (limite = 10): Promise<Produto[]> => {
     // Este endpoint precisa corresponder ao do back-end (ex: /api/relatorios/estoque-baixo)
     try {
-      const response = await api.get<Produto[]>(`/api/estoque/baixo?limite=${limite}`);
+      const response = await api.get<Produto[]>(`/estoque/baixo?limite=${limite}`);
       return response.data;
     } catch (error) {
       console.error('Erro ao listar produtos com estoque baixo:', error);

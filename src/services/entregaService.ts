@@ -42,7 +42,7 @@ export const entregaService = {
    */
   listarMinhasEntregas: async (): Promise<Entrega[]> => {
     try {
-      const response = await api.get<Entrega[]>('/api/entregas/minhas-entregas');
+      const response = await api.get<Entrega[]>('/entregas/minhas-entregas');
       return response.data;
     } catch (error) {
       console.error('Erro ao listar minhas entregas:', error);
