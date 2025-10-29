@@ -1,45 +1,95 @@
 import api from './api';
+import { Produto, FiltrosProdutos } from '../types';
+import axios, { AxiosError } from 'axios';
 
-import { Produto, ProdutoData, FiltrosProdutos } from '../types';
+interface ApiErrorResponse {
+  message?: string;
+  error?: string;
+}
 
 export const produtoService = {
   listar: async (filtros: FiltrosProdutos = {}): Promise<Produto[]> => {
     try {
-      const params = new URLSearchParams(filtros as Record<string, string>).toString();
-      const response = await api.get<Produto[]>(`/produtos${params ? `?${params}` : ''}`);
+      const params = new URLSearchParams();
+      if (filtros.nome) params.append('nome', filtros.nome);
+      if (filtros.categoriaId !== undefined && filtros.categoriaId !== null) {
+        params.append('categoriaId', String(filtros.categoriaId));
+      }
+      if (filtros.ativo !== undefined) {
+        params.append('ativo', String(filtros.ativo));
+      }
+      const queryString = params.toString();
+      const endpoint = '/produtos';
+      const response = await api.get<Produto[]>(`${endpoint}${queryString ? `?${queryString}` : ''}`);
       return response.data;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Erro ao listar produtos:', error);
-      throw new Error('Não foi possível carregar os produtos.');
+      let errorMessage = 'Não foi possível carregar os produtos.';
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<ApiErrorResponse>;
+        errorMessage = axiosError.response?.data?.message || axiosError.message || errorMessage;
+      } else if (error instanceof Error) {
+        errorMessage = error.message || errorMessage;
+      }
+      throw new Error(errorMessage);
     }
   },
 
-  criar: async (produto: ProdutoData): Promise<Produto> => {
+  criar: async (formData: FormData): Promise<Produto> => {
     try {
-      const response = await api.post<Produto>('/produtos', produto);
+      const response = await api.post<Produto>('/produtos', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       return response.data;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Erro ao criar produto:', error);
-      throw new Error('Não foi possível criar o produto.');
+      let errorMessage = 'Não foi possível criar o produto.';
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<ApiErrorResponse>;
+        errorMessage = axiosError.response?.data?.message || axiosError.message || errorMessage;
+      } else if (error instanceof Error) {
+        errorMessage = error.message || errorMessage;
+      }
+      throw new Error(errorMessage);
     }
   },
 
-  atualizar: async (id: number, produto: ProdutoData): Promise<Produto> => {
+  atualizar: async (id: number, formData: FormData): Promise<Produto> => {
     try {
-      const response = await api.put<Produto>(`/produtos/${id}`, produto);
+      const response = await api.put<Produto>(`/produtos/${id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       return response.data;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(`Erro ao atualizar produto ${id}:`, error);
-      throw new Error('Não foi possível atualizar o produto.');
+      let errorMessage = 'Não foi possível atualizar o produto.';
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<ApiErrorResponse>;
+        errorMessage = axiosError.response?.data?.message || axiosError.message || errorMessage;
+      } else if (error instanceof Error) {
+        errorMessage = error.message || errorMessage;
+      }
+      throw new Error(errorMessage);
     }
   },
 
-  remover: async (id: number): Promise<void> => {
+  desativar: async (id: number): Promise<void> => { 
     try {
-      await api.delete(`/produtos/${id}`);
-    } catch (error) {
-      console.error(`Erro ao remover produto ${id}:`, error);
-      throw new Error('Não foi possível remover o produto.');
+      await api.put(`/produtos/${id}/desativar`);
+    } catch (error: unknown) {
+      console.error(`Erro ao desativar produto ${id}:`, error);
+      let errorMessage = 'Não foi possível desativar o produto.';
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<ApiErrorResponse>;
+        errorMessage = axiosError.response?.data?.message || axiosError.message || errorMessage;
+      } else if (error instanceof Error) {
+        errorMessage = error.message || errorMessage;
+      }
+      throw new Error(errorMessage);
     }
   }
 };

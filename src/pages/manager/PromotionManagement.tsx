@@ -2,13 +2,12 @@ import React, { useState } from 'react';
 import Layout from '../../components/Layout';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import PromotionForm from '../../components/forms/PromotionForm';
-import { usePromocoes } from '../../hooks/usePromocoes'; // <-- Importa o hook correto
+import { usePromocoes } from '../../hooks/usePromocoes';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { Promocao, PromocaoData } from '../../types';
 import { formatDate } from '../../utils/apiHelpers';
 
 const PromotionManagement: React.FC = () => {
-  // USA O HOOK CORRETO
   const { promocoes, loading, criarPromocao, atualizarPromocao, removerPromocao } = usePromocoes();
 
   const [isFormOpen, setIsFormOpen] = useState(false);

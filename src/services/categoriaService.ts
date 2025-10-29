@@ -1,64 +1,85 @@
 import api from './api';
-import { Categoria } from '../types'; 
+import { Categoria } from '../types';
+import axios, { AxiosError } from 'axios';
 
 type CategoriaData = Omit<Categoria, 'id'>;
 
+interface ApiErrorResponse {
+  message?: string;
+  error?: string;
+}
+
 export const categoriaService = {
-  /**
-   * Busca todas as categorias da API.
-   * @returns Uma Promise com um array de Categorias.
-   */
   listar: async (): Promise<Categoria[]> => {
     try {
       const response = await api.get<Categoria[]>('/categorias');
       return response.data;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Erro ao listar categorias:', error);
-      throw new Error('Não foi possível carregar as categorias. Tente novamente mais tarde.');
+      let errorMessage = 'Não foi possível carregar as categorias.';
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<ApiErrorResponse>;
+        errorMessage = axiosError.response?.data?.message || axiosError.message || errorMessage;
+      } else if (error instanceof Error) {
+        errorMessage = error.message || errorMessage;
+      }
+      throw new Error(errorMessage);
     }
   },
 
-  /**
-   * Cria uma nova categoria.
-   * @param categoria Os dados da nova categoria (nome, descricao).
-   * @returns Uma Promise com a Categoria recém-criada.
-   */
   criar: async (categoria: CategoriaData): Promise<Categoria> => {
     try {
-      const response = await api.post<Categoria>('/categorias', categoria);
+      const response = await api.post<Categoria>('/categorias', categoria); // URL corrigida
       return response.data;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Erro ao criar categoria:', error);
-      throw new Error('Não foi possível criar a categoria.');
+      let errorMessage = 'Não foi possível criar a categoria.';
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<ApiErrorResponse>;
+        errorMessage = axiosError.response?.data?.message || axiosError.message || errorMessage;
+      } else if (error instanceof Error) {
+        errorMessage = error.message || errorMessage;
+      }
+      throw new Error(errorMessage);
     }
   },
 
-  /**
-   * Atualiza uma categoria existente.
-   * @param id 
-   * @param categoria 
-   * @returns Uma Promise com a Categoria atualizada.
-   */
   atualizar: async (id: number, categoria: CategoriaData): Promise<Categoria> => {
     try {
-      const response = await api.put<Categoria>(`/api/categorias/${id}`, categoria);
+      const response = await api.put<Categoria>(`/categorias/${id}`, categoria);
       return response.data;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(`Erro ao atualizar categoria ${id}:`, error);
-      throw new Error('Não foi possível atualizar a categoria.');
+      let errorMessage = 'Não foi possível atualizar a categoria.';
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<ApiErrorResponse>;
+        errorMessage = axiosError.response?.data?.message || axiosError.message || errorMessage;
+      } else if (error instanceof Error) {
+        errorMessage = error.message || errorMessage;
+      }
+      throw new Error(errorMessage);
     }
   },
 
-  /**
-   * Remove uma categoria.
-   * @param id O ID da categoria a ser removida.
-   */
   remover: async (id: number): Promise<void> => {
     try {
-      await api.delete(`/api/categorias/${id}`);
-    } catch (error) {
+      await api.delete(`/categorias/${id}`);
+    } catch (error: unknown) {
       console.error(`Erro ao remover categoria ${id}:`, error);
-      throw new Error('Não foi possível remover a categoria.');
+      let errorMessage = 'Não foi possível remover a categoria.';
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<ApiErrorResponse>;
+      if (axiosError.response?.status === 409) {
+            errorMessage = axiosError.response?.data?.message || errorMessage;
+        } else {
+            errorMessage = axiosError.message || errorMessage;
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message || errorMessage;
+      }if (errorMessage.toLowerCase().includes('associada a produtos')) {
+          throw new Error('Não é possível excluir: Categoria está associada a produtos.');
+      }
+      throw new Error(errorMessage);
     }
   }
 };

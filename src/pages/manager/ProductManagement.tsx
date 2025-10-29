@@ -1,17 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Layout from '../../components/Layout';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Package } from 'lucide-react';
 import ProductForm from '../../components/forms/ProductForm';
+import ConfirmationModal from '../../components/ConfirmationModal';
 import { useProdutos } from '../../hooks/useProdutos';
 import LoadingSpinner from '../../components/LoadingSpinner';
-import { formatCurrency } from '../../utils/apiHelpers';
-import { Produto, ProdutoData } from '../../types';
+import { formatCurrency, formatDate } from '../../utils/apiHelpers';
+import { Produto } from '../../types';
 
 const ProductManagement: React.FC = () => {
-  const { produtos, loading, criarProduto, atualizarProduto, removerProduto } = useProdutos();
+  const {
+    produtos: listaProdutos,
+    loading: loadingList,
+    criarProduto,
+    atualizarProduto,
+    desativarProduto,
+    carregarProdutos,
+  } = useProdutos();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Produto | null>(null);
+  const shouldReloadList = useRef(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [productToDeactivate, setProductToDeactivate] = useState<Produto | null>(null);
+  const [isDeactivatingLoading, setIsDeactivatingLoading] = useState(false);
 
   const handleOpenCreateForm = () => {
     setEditingProduct(null);
@@ -23,78 +35,139 @@ const ProductManagement: React.FC = () => {
     setIsFormOpen(true);
   };
 
-  // A função agora passa os dados tipados diretamente para o hook
-  const handleFormSubmit = async (productData: ProdutoData) => {
+  const handleFormSubmit = async (formData: FormData): Promise<boolean> => {
     let success = false;
-    if (editingProduct) {
-      success = await atualizarProduto(editingProduct.id, productData);
-    } else {
-      success = await criarProduto(productData);
-    }
-    
-    if (success) {
-      setIsFormOpen(false);
+    try {
+      if (editingProduct) {
+        success = await atualizarProduto(editingProduct.id, formData);
+      } else {
+        success = await criarProduto(formData);
+      }
+
+      if (success) {
+        shouldReloadList.current = true;
+        setIsFormOpen(false);
+        setEditingProduct(null);
+      }
+      return success;
+    } catch (error) {
+      console.error("Erro pego em ProductManagement handleFormSubmit:", error);
+      return false;
     }
   };
 
-  const handleDeleteProduct = (productId: number) => {
-    if (window.confirm('Tem certeza que deseja excluir este produto? A ação não pode ser desfeita.')) {
-      removerProduto(productId);
+  const handleOpenDeactivateModal = (product: Produto) => {
+    setProductToDeactivate(product);
+    setIsConfirmModalOpen(true);
+  };
+
+  const handleConfirmDeactivate = async () => {
+    if (!productToDeactivate) return;
+
+    setIsDeactivatingLoading(true);
+    const success = await desativarProduto(productToDeactivate.id);
+    setIsDeactivatingLoading(false);
+
+    if (success) {
+      setIsConfirmModalOpen(false);
+      setProductToDeactivate(null);
+      carregarProdutos();
     }
   };
+
+  const handleCloseForm = () => {
+    setIsFormOpen(false);
+    setEditingProduct(null);
+  }
+
+  const handleCloseConfirmModal = () => {
+     setIsConfirmModalOpen(false);
+     setProductToDeactivate(null);
+     setIsDeactivatingLoading(false);
+  }
+
+  useEffect(() => {
+    const checkReload = () => {
+        if (!isFormOpen && shouldReloadList.current) {
+            carregarProdutos();
+            shouldReloadList.current = false;
+        }
+    };
+    const timerId = setTimeout(checkReload, 0);
+    return () => clearTimeout(timerId);
+
+  }, [isFormOpen, carregarProdutos]);
 
   return (
     <Layout title="Gerenciamento de Produtos">
-      <div className="mb-6 flex justify-between items-center">
+      <div className="mb-6 flex justify-between items-center flex-wrap gap-4">
         <h1 className="text-2xl font-semibold text-gray-800">Produtos</h1>
-        <button 
+        <button
           onClick={handleOpenCreateForm}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-green-700 transition-colors"
+          className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-green-700 transition-colors shadow-sm"
         >
           <Plus className="h-5 w-5 mr-2" />
           Adicionar Produto
         </button>
       </div>
 
-      <div className="bg-white shadow rounded-lg overflow-x-auto">
-        {loading && produtos.length === 0 ? (
+      <div className="bg-white shadow-md rounded-lg overflow-x-auto">
+        {loadingList && listaProdutos.length === 0 ? (
           <LoadingSpinner text="Carregando produtos..." />
         ) : (
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nome</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Categoria</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Preço de Venda</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ações</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Imagem</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Categoria</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço Venda</th>
+                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Validade</th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {produtos.map((product) => (
-                <tr key={product.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{product.nome}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.categoria?.nome ?? 'N/A'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(product.precoVenda)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      product.ativo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {product.ativo ? 'Ativo' : 'Inativo'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex items-center space-x-4">
-                      <button onClick={() => handleOpenEditForm(product)} className="text-blue-600 hover:text-blue-900" title="Editar produto">
-                        <Edit className="h-5 w-5" />
-                      </button>
-                      <button onClick={() => handleDeleteProduct(product.id)} className="text-red-600 hover:text-red-900" title="Excluir produto">
-                        <Trash2 className="h-5 w-5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {listaProdutos.length === 0 && !loadingList ? (
+                 <tr><td colSpan={7} className="text-center py-6 text-gray-500">Nenhum produto cadastrado.</td></tr>
+              ) : (
+                listaProdutos.map((product) => (
+                  <tr key={product.id} className={`hover:bg-gray-50 transition-colors ${!product.ativo ? 'opacity-60 bg-gray-50' : ''}`}>
+                     <td className="px-6 py-4 whitespace-nowrap">
+                       <div className="flex-shrink-0 h-10 w-10">
+                         {product.imagemUrl ? (
+                            <img className="h-10 w-10 rounded-full object-cover" src={product.imagemUrl} alt={product.nome} />
+                          ) : (
+                            <div className={`h-10 w-10 rounded-full ${!product.ativo ? 'bg-gray-300' : 'bg-gray-200'} flex items-center justify-center text-gray-400`}>
+                              <Package size={20} />
+                            </div>
+                          )}
+                       </div>
+                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{product.nome}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">{product.categoria?.nome ?? 'N/A'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 font-semibold">{formatCurrency(product.precoVenda)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden lg:table-cell">{product.dataValidade ? formatDate(product.dataValidade) : '-'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <span className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        product.ativo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {product.ativo ? 'Ativo' : 'Inativo'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex items-center justify-end space-x-3">
+                        <button onClick={() => handleOpenEditForm(product)} className="text-indigo-600 hover:text-indigo-900 transition-colors" title="Editar produto">
+                          <Edit className="h-5 w-5" />
+                        </button>
+                        <button onClick={() => handleOpenDeactivateModal(product)} className="text-red-600 hover:text-red-900 transition-colors" title={product.ativo ? "Desativar produto" : "Reativar (implementar)"}>
+                          <Trash2 className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         )}
@@ -102,11 +175,22 @@ const ProductManagement: React.FC = () => {
 
       <ProductForm
         isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
+        onClose={handleCloseForm}
         onSubmit={handleFormSubmit}
-        initialData={editingProduct} 
+        initialData={editingProduct}
         isEditing={!!editingProduct}
       />
+
+      <ConfirmationModal
+        isOpen={isConfirmModalOpen}
+        onClose={handleCloseConfirmModal}
+        onConfirm={handleConfirmDeactivate}
+        title={productToDeactivate?.ativo ? "Confirmar Desativação" : "Confirmar Reativação"}
+        message={`Tem certeza que deseja ${productToDeactivate?.ativo ? 'DESATIVAR' : 'REATIVAR'} o produto "${productToDeactivate?.nome}"? ${productToDeactivate?.ativo ? 'Ele não aparecerá mais para venda.' : 'Ele voltará a aparecer para venda.'}`}
+        confirmText={productToDeactivate?.ativo ? 'Desativar' : 'Reativar'}
+        isLoading={isDeactivatingLoading}
+      />
+
     </Layout>
   );
 };

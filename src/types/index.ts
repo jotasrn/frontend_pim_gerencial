@@ -1,40 +1,32 @@
 // src/types.ts
 
-// --- Tipos de Autenticação e Usuário ---
-
 export type TipoUsuario = 'gerente' | 'entregador' | 'cliente';
 
 export interface Usuario {
   id: number;
-  nomeCompleto: string; // O backend usa nomeCompleto, vamos padronizar
+  nomeCompleto: string;
   email: string;
   permissao: TipoUsuario;
   ativo?: boolean;
-  googleId?: string; // Incluído para login Google
-  is2faEnabled?: boolean; // Incluído para 2FA
+  googleId?: string;
+  is2faEnabled?: boolean;
 }
 
 export type UsuarioData = {
   nomeCompleto: string;
   email: string;
-  senha?: string; // Senha é opcional na atualização
+  senha?: string;
   permissao: TipoUsuario;
   ativo: boolean;
 };
 
-// --- Tipos de Cliente ---
-
 export interface Cliente {
-  id: number; // O ID do cliente é o mesmo do usuário
-  usuario?: Usuario; // Dados do usuário associado
+  id: number;
+  usuario?: Usuario;
   cpf?: string;
   telefone?: string;
-  enderecos?: Endereco[]; // Lista de endereços
-  // Removido: nome, email (vem do usuario)
-  // Removido: totalPedidos, ultimoPedido (não vêm da API /clientes)
+  enderecos?: Endereco[];
 }
-
-// --- Tipos de Endereço ---
 
 export interface Endereco {
   id: number;
@@ -47,10 +39,8 @@ export interface Endereco {
   cep: string;
   latitude?: number;
   longitude?: number;
-  cliente?: Cliente; // Referência ao cliente (pode ser omitida em DTOs)
+  cliente?: Cliente;
 }
-
-// --- Tipos de Produto e Categoria ---
 
 export interface Categoria {
   id: number;
@@ -64,44 +54,39 @@ export interface Produto {
   descricao?: string;
   precoCusto: number;
   precoVenda: number;
-  dataValidade?: string; // Formato YYYY-MM-DD
-  dataColheita?: string; // Formato YYYY-MM-DD
-  tipoMedida?: string; // Ex: 'KG', 'UN', 'BDJ'
+  dataValidade?: string;
+  dataColheita?: string;
+  tipoMedida?: string;
   codigoBarras?: string;
-  imagemUrl?: string; // URL da imagem do produto
+  imagemUrl?: string;
   ativo: boolean;
   categoria?: Categoria;
-  promocoes?: Promocao[]; // Promoções associadas
+  promocoes?: Promocao[];
 }
 
 export type ProdutoData = Omit<Produto, 'id' | 'precoVenda' | 'categoria' | 'promocoes' | 'imagemUrl'> & {
   categoria: {
     id: number;
   };
-  // A imagem será tratada separadamente como File no service/hook
 };
 
 export interface FiltrosProdutos {
   nome?: string;
-  categoriaId?: number; // Usar string se o select retornar string
+  categoriaId?: number | string; // Permitir string vindo do select
   ativo?: boolean;
 }
 
-// --- Tipos de Estoque ---
-
 export interface Estoque {
   id: number;
-  produto?: Produto; // Geralmente o ID é suficiente
+  produto?: Produto;
   produtoId: number;
   quantidadeAtual: number;
   quantidadeMinima?: number;
 }
 
-// --- Tipos de Venda e ItemVenda ---
-
 export interface ItemVenda {
   id: number;
-  produto?: Produto; // Detalhes do produto
+  produto?: Produto;
   produtoId: number;
   quantidade: number;
   precoUnitario: number;
@@ -109,27 +94,25 @@ export interface ItemVenda {
 
 export interface Venda {
   id: number;
-  cliente?: Cliente; // Detalhes do cliente
+  cliente?: Cliente;
   clienteId: number;
-  dataHora: string; // Formato ISO (Instant)
+  dataHora: string;
   valorTotal: number;
   formaPagamento: string;
-  statusPedido: string; // Ex: 'PAGAMENTO_APROVADO', 'EM_PREPARACAO', 'CONCLUIDO'
-  enderecoEntrega?: Endereco; // Endereço de entrega selecionado
+  statusPedido: string;
+  enderecoEntrega?: Endereco;
   enderecoEntregaId?: number;
   itens: ItemVenda[];
 }
 
-// --- Tipos de Entrega ---
-
 export interface Entrega {
   id: number;
-  venda?: Venda; // Detalhes da venda associada
+  venda?: Venda;
   vendaId: number;
-  entregador?: Usuario; // Detalhes do entregador
+  entregador?: Usuario;
   entregadorId?: number;
-  status: string; // Ex: 'PENDENTE', 'EM_ROTA', 'ENTREGUE'
-  dataEntrega?: string; // Formato YYYY-MM-DD
+  status: string;
+  dataEntrega?: string;
 }
 
 export interface FiltrosEntregas {
@@ -138,8 +121,6 @@ export interface FiltrosEntregas {
   dataFim?: string;
   entregadorId?: number;
 }
-
-// --- Tipos de Fornecedor ---
 
 export interface Fornecedor {
   id: number;
@@ -153,15 +134,13 @@ export interface FiltrosFornecedores {
   nome?: string;
 }
 
-// --- Tipos de Perda ---
-
 export interface Perda {
   id: number;
-  produto?: Produto; // Detalhes do produto
+  produto?: Produto;
   produtoId: number;
   quantidade: number;
   motivo?: string;
-  dataPerda: string; // Formato YYYY-MM-DD
+  dataPerda: string;
 }
 
 export type PerdaData = {
@@ -176,16 +155,14 @@ export interface FiltrosPerdas {
   produtoId?: number;
 }
 
-// --- Tipos de Promoção ---
-
 export interface Promocao {
   id: number;
   descricao: string;
   percentualDesconto: number;
-  dataInicio: string; // Formato YYYY-MM-DD
-  dataFim: string; // Formato YYYY-MM-DD
+  dataInicio: string;
+  dataFim: string;
   ativa: boolean;
-  produtos?: Produto[]; // Produtos associados (pode vir vazio dependendo do endpoint)
+  produtos?: Produto[];
 }
 
 export type PromocaoData = {
@@ -194,20 +171,18 @@ export type PromocaoData = {
   dataInicio: string;
   dataFim: string;
   ativa: boolean;
-  produtoIds: number[]; // Apenas IDs dos produtos ao criar/atualizar
+  produtoIds: number[];
 };
 
 export interface FiltrosPromocoes {
   ativa?: boolean;
-  data?: string; // Para verificar promoções ativas em uma data específica
+  data?: string;
 }
-
-// --- Tipos de Relatório ---
 
 export interface FiltrosRelatorios {
   dataInicio?: string;
   dataFim?: string;
-  limite?: number; // Adicionado para limitar resultados
+  limite?: number;
 }
 
 export interface VendasCategoriaData {
@@ -217,12 +192,12 @@ export interface VendasCategoriaData {
 
 export interface TopProdutosData {
   nomeProduto: string;
-  totalVendido: number; // No backend é Long
+  totalVendido: number;
 }
 
 export interface PerdasMotivoData {
   motivo: string;
-  totalPerdido: number; // No backend é Long
+  totalPerdido: number;
 }
 
 export interface NiveisEstoqueData {
@@ -232,6 +207,6 @@ export interface NiveisEstoqueData {
 }
 
 export interface EstoqueCriticoData {
-  totalItens: number; // No backend é Long
-  itensCriticos: number; // No backend é Long
+  totalItens: number;
+  itensCriticos: number;
 }

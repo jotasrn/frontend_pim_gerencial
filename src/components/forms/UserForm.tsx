@@ -1,12 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-// Ícones não utilizados ('Phone', 'MapPin') foram removidos
 import { X, User, Mail, Lock } from 'lucide-react';
 import { showToast } from '../Toast';
 import { Usuario, UsuarioData, TipoUsuario } from '../../types';
 
-// --- Interfaces para Tipagem ---
-
-// Define a estrutura dos dados do formulário
 interface UserFormData {
   nomeCompleto: string;
   email: string;
@@ -19,7 +15,9 @@ interface UserFormData {
 interface UserFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (userData: UsuarioData | Partial<UsuarioData>) => Promise<void>;
+  // --- CORREÇÃO AQUI ---
+  onSubmit: (userData: UsuarioData | Partial<UsuarioData>) => Promise<boolean>; // <-- Alterado para Promise<boolean>
+  // --- FIM DA CORREÇÃO ---
   initialData?: Usuario | null;
   isEditing?: boolean;
 }
@@ -36,10 +34,10 @@ const UserForm: React.FC<UserFormProps> = ({
     email: '',
     senha: '',
     confirmarSenha: '',
-    permissao: 'gerente',
+    permissao: 'gerente', // Default para gerente
     ativo: true,
   }), []);
-  
+
   const [formData, setFormData] = useState<UserFormData>(initialFormState);
   const [errors, setErrors] = useState<Partial<Record<keyof UserFormData, string>>>({});
   const [loading, setLoading] = useState(false);
@@ -48,9 +46,9 @@ const UserForm: React.FC<UserFormProps> = ({
     if (isOpen) {
       if (isEditing && initialData) {
         setFormData({
-          nomeCompleto: initialData.nomeCompleto || initialData.nome || '',
+          nomeCompleto: initialData.nomeCompleto || '', // Prioriza nomeCompleto
           email: initialData.email || '',
-          senha: '',
+          senha: '', // Senha nunca é preenchida na edição
           confirmarSenha: '',
           permissao: initialData.permissao || 'gerente',
           ativo: initialData.ativo ?? true,
@@ -61,10 +59,11 @@ const UserForm: React.FC<UserFormProps> = ({
       setErrors({});
     }
   }, [initialData, isEditing, isOpen, initialFormState]);
-  
+
   const roles = [
     { value: 'gerente', label: 'Gerente' },
     { value: 'entregador', label: 'Entregador' },
+    // Adicionar 'cliente' se for gerenciar clientes aqui também
   ];
 
   const handleInputChange = (field: keyof UserFormData, value: string | boolean) => {
@@ -80,13 +79,19 @@ const UserForm: React.FC<UserFormProps> = ({
 
   const validateForm = () => {
     const newErrors: Partial<Record<keyof UserFormData, string>> = {};
-    if (!formData.nomeCompleto.trim()) newErrors.nomeCompleto = 'Nome é obrigatório';
+    if (!formData.nomeCompleto.trim()) newErrors.nomeCompleto = 'Nome completo é obrigatório';
     if (!formData.email.trim() || !/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email inválido';
-    
-    if (!isEditing) {
-      if (!formData.senha || formData.senha.length < 6) newErrors.senha = 'Senha deve ter no mínimo 6 caracteres';
-      if (formData.senha !== formData.confirmarSenha) newErrors.confirmarSenha = 'As senhas não coincidem';
+
+    // Valida senha apenas ao criar ou se ela for preenchida na edição
+    if (!isEditing || (isEditing && formData.senha)) {
+        if (!formData.senha || formData.senha.length < 6) {
+            newErrors.senha = 'Senha deve ter no mínimo 6 caracteres';
+        }
+        if (formData.senha !== formData.confirmarSenha) {
+            newErrors.confirmarSenha = 'As senhas não coincidem';
+        }
     }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -100,119 +105,154 @@ const UserForm: React.FC<UserFormProps> = ({
 
     setLoading(true);
     try {
-      const submitData: Partial<UsuarioData> = { ...formData };
-      delete (submitData as Partial<UserFormData>).confirmarSenha;
-      
-      if (isEditing && !submitData.senha) {
-        delete submitData.senha;
-      }
-      
-      await onSubmit(submitData as UsuarioData);
-      onClose();
-    } catch {
-      showToast.error('Erro ao salvar usuário.');
+      // Prepara os dados para envio
+      const submitData: Partial<UsuarioData> = {
+          nomeCompleto: formData.nomeCompleto,
+          email: formData.email,
+          permissao: formData.permissao,
+          ativo: formData.ativo,
+      };
+
+      // Inclui senha apenas se for criação ou se foi preenchida na edição
+       if (!isEditing || (isEditing && formData.senha)) {
+          submitData.senha = formData.senha;
+       }
+
+
+      // Chama o onSubmit do pai (que retorna boolean)
+      await onSubmit(submitData as UsuarioData); // Faz cast para UsuarioData
+      // O pai (UserManagement) fechará o modal se onSubmit retornar true
+
+    } catch (error) {
+      console.error("Erro inesperado no handleSubmit do UserForm:", error);
+      showToast.error("Ocorreu um erro inesperado no formulário.");
     } finally {
-      setLoading(false);
+      setLoading(false); // Desliga o loading independentemente do resultado
     }
   };
+
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-xl max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between p-6 border-b">
+        <div className="flex items-center justify-between p-5 border-b sticky top-0 bg-white z-10">
           <h2 className="text-xl font-semibold text-gray-900">{isEditing ? 'Editar Usuário' : 'Adicionar Usuário'}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="w-6 h-6" /></button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 focus:outline-none" disabled={loading}>
+            <X className="w-6 h-6" />
+          </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
           <div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  <User className="w-4 h-4 inline mr-2" /> Nome Completo *
+                <label htmlFor="user-nomeCompleto" className="block text-sm font-medium text-gray-700 mb-1">
+                  <User className="w-4 h-4 inline mr-1 text-gray-500" /> Nome Completo *
                 </label>
                 <input
-                  type="text"
-                  value={formData.nomeCompleto}
+                  id="user-nomeCompleto" type="text" value={formData.nomeCompleto}
                   onChange={(e) => handleInputChange('nomeCompleto', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${errors.nomeCompleto ? 'border-red-500' : 'border-gray-300'}`}
-                />
-                {errors.nomeCompleto && <p className="text-red-500 text-sm mt-1">{errors.nomeCompleto}</p>}
+                  className={`input ${errors.nomeCompleto ? 'input-error' : ''}`}
+                  disabled={loading} />
+                {errors.nomeCompleto && <p className="text-red-500 text-xs mt-1">{errors.nomeCompleto}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  <Mail className="w-4 h-4 inline mr-2" /> Email *
+                <label htmlFor="user-email" className="block text-sm font-medium text-gray-700 mb-1">
+                  <Mail className="w-4 h-4 inline mr-1 text-gray-500" /> Email *
                 </label>
                 <input
-                  type="email"
-                  value={formData.email}
+                  id="user-email" type="email" value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
-                />
-                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+                  className={`input ${errors.email ? 'input-error' : ''}`}
+                  disabled={loading} />
+                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+              </div>
+            </div>
+          </div>
+           <div>
+              <label htmlFor="user-permissao" className="block text-sm font-medium text-gray-700 mb-1">Função *</label>
+              <select
+                id="user-permissao" value={formData.permissao}
+                onChange={(e) => handleInputChange('permissao', e.target.value as TipoUsuario)}
+                className="select w-full"
+                disabled={loading} >
+                {roles.map((role) => (
+                  <option key={role.value} value={role.value}>{role.label}</option>
+                ))}
+              </select>
+            </div>
+
+          {/* Seção de Senha (Condicional) */}
+          <div>
+            <h3 className="text-base font-medium text-gray-800 mb-3 border-b pb-2">
+                {isEditing ? 'Alterar Senha (Opcional)' : 'Definir Senha *'}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label htmlFor="user-senha" className="block text-sm font-medium text-gray-700 mb-1">
+                  <Lock className="w-4 h-4 inline mr-1 text-gray-500" /> Senha {isEditing ? '' : '*'}
+                </label>
+                <input
+                  id="user-senha" type="password" value={formData.senha}
+                  onChange={(e) => handleInputChange('senha', e.target.value)}
+                  className={`input ${errors.senha ? 'input-error' : ''}`}
+                  placeholder={isEditing ? 'Deixe em branco para manter a atual' : 'Mínimo 6 caracteres'}
+                  disabled={loading} />
+                {errors.senha && <p className="text-red-500 text-xs mt-1">{errors.senha}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Função *</label>
-                <select
-                  value={formData.permissao}
-                  onChange={(e) => handleInputChange('permissao', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                >
-                  {roles.map((role) => (
-                    <option key={role.value} value={role.value}>{role.label}</option>
-                  ))}
-                </select>
+                <label htmlFor="user-confirmarSenha" className="block text-sm font-medium text-gray-700 mb-1">
+                  <Lock className="w-4 h-4 inline mr-1 text-gray-500" /> Confirmar Senha {isEditing ? '' : '*'}
+                </label>
+                <input
+                  id="user-confirmarSenha" type="password" value={formData.confirmarSenha}
+                  onChange={(e) => handleInputChange('confirmarSenha', e.target.value)}
+                  className={`input ${errors.confirmarSenha ? 'input-error' : ''}`}
+                   placeholder={isEditing ? 'Deixe em branco para manter a atual' : 'Repita a senha'}
+                  disabled={loading} />
+                {errors.confirmarSenha && <p className="text-red-500 text-xs mt-1">{errors.confirmarSenha}</p>}
               </div>
             </div>
           </div>
 
-          {!isEditing && (
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Credenciais</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    <Lock className="w-4 h-4 inline mr-2" /> Senha *
-                  </label>
-                  <input
-                    type="password"
-                    value={formData.senha}
-                    onChange={(e) => handleInputChange('senha', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${errors.senha ? 'border-red-500' : 'border-gray-300'}`}
-                  />
-                  {errors.senha && <p className="text-red-500 text-sm mt-1">{errors.senha}</p>}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    <Lock className="w-4 h-4 inline mr-2" /> Confirmar Senha *
-                  </label>
-                  <input
-                    type="password"
-                    value={formData.confirmarSenha}
-                    onChange={(e) => handleInputChange('confirmarSenha', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${errors.confirmarSenha ? 'border-red-500' : 'border-gray-300'}`}
-                  />
-                  {errors.confirmarSenha && <p className="text-red-500 text-sm mt-1">{errors.confirmarSenha}</p>}
-                </div>
-              </div>
-            </div>
-          )}
-          
-          <div className="flex items-center">
-            <input type="checkbox" id="ativo" checked={formData.ativo} onChange={(e) => handleInputChange('ativo', e.target.checked)} className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"/>
-            <label htmlFor="ativo" className="ml-2 text-sm text-gray-700">Usuário ativo</label>
+          <div className="flex items-center pt-2">
+            <input
+              type="checkbox" id="user-ativo" checked={formData.ativo}
+              onChange={(e) => handleInputChange('ativo', e.target.checked)}
+              className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-offset-0 focus:ring-2 focus:ring-green-500"
+              disabled={loading} />
+            <label htmlFor="user-ativo" className="ml-2 block text-sm text-gray-900 select-none">Usuário ativo no sistema</label>
           </div>
 
-          <div className="flex justify-end space-x-4 pt-6 border-t">
-            <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">Cancelar</button>
-            <button type="submit" disabled={loading} className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50">
-              {loading ? 'Salvando...' : (isEditing ? 'Atualizar' : 'Criar Usuário')}
+          <div className="flex justify-end space-x-3 pt-5 border-t mt-6 sticky bottom-0 bg-white py-4 px-6 z-10">
+            <button
+              type="button" onClick={onClose}
+              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+              disabled={loading} >
+              Cancelar
+            </button>
+            <button
+              type="submit" disabled={loading}
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed" >
+              {loading && (
+                 <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                 </svg>
+              )}
+              {loading ? 'Salvando...' : (isEditing ? 'Atualizar Usuário' : 'Criar Usuário')}
             </button>
           </div>
         </form>
       </div>
+      <style>{`
+        .input { @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:cursor-not-allowed; }
+        .input-error { @apply border-red-500 focus:ring-red-500; }
+        .select { @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-sm disabled:bg-gray-100 disabled:cursor-not-allowed; }
+        .textarea { @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:cursor-not-allowed; }
+      `}</style>
     </div>
   );
 };

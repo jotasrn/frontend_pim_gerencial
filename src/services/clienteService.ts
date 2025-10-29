@@ -1,24 +1,30 @@
+import api from './api';
 import { Cliente } from '../types';
+import axios, { AxiosError } from 'axios';
+
+interface ApiErrorResponse {
+  message?: string;
+  error?: string;
+}
 
 export const clienteService = {
-  /**
-   * Busca todos os clientes da API.
-   * ATENÇÃO: Este endpoint precisa ser criado e protegido no back-end.
-   */
   listar: async (): Promise<Cliente[]> => {
     try {
-      // const response = await api.get<Cliente[]>('/clientes');
-      // return response.data;
-      
-      // Simulação enquanto o back-end não está pronto
-      console.warn("API endpoint para listar clientes não implementado. Retornando dados de exemplo.");
-      return [
-        { id: 1, nome: 'Maria Silva', email: 'maria@example.com', totalPedidos: 12, ultimoPedido: '2025-09-10' },
-        { id: 2, nome: 'João Pereira', email: 'joao@example.com', totalPedidos: 8, ultimoPedido: '2025-09-09' },
-      ];
-    } catch (error) {
+      // Chama o endpoint real do backend
+      const response = await api.get<Cliente[]>('/clientes');
+      // A API retorna Cliente[], que pode ter usuario aninhado
+      return response.data;
+    } catch (error: unknown) {
       console.error('Erro ao listar clientes:', error);
-      throw new Error('Não foi possível carregar os clientes.');
+      let errorMessage = 'Não foi possível carregar os clientes.';
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<ApiErrorResponse>;
+        errorMessage = axiosError.response?.data?.message || axiosError.message || errorMessage;
+      } else if (error instanceof Error) {
+        errorMessage = error.message || errorMessage;
+      }
+      throw new Error(errorMessage);
     }
   },
+  // REMOVIDAS: Funções criar, atualizar, remover (se existissem)
 };

@@ -7,6 +7,7 @@ interface UseClientesReturn {
   clientes: Cliente[];
   loading: boolean;
   error: string | null;
+  carregarClientes: () => void;
 }
 
 export const useClientes = (): UseClientesReturn => {
@@ -20,10 +21,10 @@ export const useClientes = (): UseClientesReturn => {
     try {
       const dados = await clienteService.listar();
       setClientes(dados);
-    } catch (err) {
-      const errorMessage = (err as Error).message;
+    } catch (err: unknown) { 
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
       setError(errorMessage);
-      showToast.error(errorMessage);
+      showToast.error(`Erro ao carregar clientes: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -37,5 +38,6 @@ export const useClientes = (): UseClientesReturn => {
     clientes,
     loading,
     error,
+    carregarClientes,
   };
 };

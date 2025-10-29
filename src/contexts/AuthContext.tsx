@@ -5,7 +5,7 @@ export type TipoUsuario = 'gerente' | 'entregador';
 
 export interface Usuario {
   id: number;
-  nome: string;
+  nomeCompleto: string;
   email: string;
   permissao: TipoUsuario;
 }
@@ -18,13 +18,9 @@ interface TipoAuthContext {
   verificarPermissao: (permissao: TipoUsuario) => boolean;
 }
 
-// --- Contexto ---
-
 const AuthContext = createContext<TipoAuthContext>({} as TipoAuthContext);
 
 export const useAuth = () => useContext(AuthContext);
-
-// --- Provedor ---
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
@@ -43,9 +39,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           
           const dadosUsuario: Usuario = {
             id: resposta.data.id,
-            nome: resposta.data.nomeCompleto, // Corrigindo nome do campo
+            nomeCompleto: resposta.data.nomeCompleto, 
             email: resposta.data.email,
-            permissao: resposta.data.permissao.toLowerCase() as TipoUsuario, // Convertendo 'GERENTE' para 'gerente'
+            permissao: resposta.data.permissao.toLowerCase() as TipoUsuario, 
           };
           setUsuario(dadosUsuario);
         } catch (error) {
@@ -82,7 +78,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const respostaUsuario = await api.get('/usuarios/me');
       const dadosUsuario: Usuario = {
         id: respostaUsuario.data.id,
-        nome: respostaUsuario.data.nomeCompleto,
+        nomeCompleto: respostaUsuario.data.nomeCompleto,
         email: respostaUsuario.data.email,
         permissao: respostaUsuario.data.permissao.toLowerCase() as TipoUsuario,
       };

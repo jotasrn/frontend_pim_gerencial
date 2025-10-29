@@ -6,6 +6,8 @@ import { Usuario, UsuarioData } from '../types';
 interface UseUsuariosReturn {
   usuarios: Usuario[];
   loading: boolean;
+  error: string | null;
+  carregarUsuarios: () => void;
   criarUsuario: (usuario: UsuarioData) => Promise<boolean>;
   atualizarUsuario: (id: number, usuario: Partial<UsuarioData>) => Promise<boolean>;
   removerUsuario: (id: number) => Promise<boolean>;
@@ -14,51 +16,61 @@ interface UseUsuariosReturn {
 export const useUsuarios = (): UseUsuariosReturn => {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   const carregarUsuarios = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const dados = await usuarioService.listar();
-      setUsuarios(dados);
-    } catch (err) {
-      showToast.error((err as Error).message);
+      setUsuarios(dados); 
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
+      setError(errorMessage);
+      showToast.error(`Erro ao carregar usuários: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
   }, []);
 
   const criarUsuario = async (usuario: UsuarioData): Promise<boolean> => {
+    setError(null);
     try {
       await usuarioService.criar(usuario);
-      await carregarUsuarios();
       showToast.success('Usuário criado com sucesso!');
       return true;
-    } catch (err) {
-      showToast.error((err as Error).message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
+      setError(errorMessage);
+      showToast.error(`Erro ao criar usuário: ${errorMessage}`);
       return false;
     }
   };
 
   const atualizarUsuario = async (id: number, usuario: Partial<UsuarioData>): Promise<boolean> => {
+     setError(null);
     try {
       await usuarioService.atualizar(id, usuario);
-      await carregarUsuarios();
       showToast.success('Usuário atualizado com sucesso!');
       return true;
-    } catch (err) {
-      showToast.error((err as Error).message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
+      setError(errorMessage);
+      showToast.error(`Erro ao atualizar usuário: ${errorMessage}`);
       return false;
     }
   };
 
   const removerUsuario = async (id: number): Promise<boolean> => {
+    setError(null);
     try {
       await usuarioService.remover(id);
-      await carregarUsuarios();
       showToast.success('Usuário removido com sucesso!');
       return true;
-    } catch (err) {
-      showToast.error((err as Error).message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
+      setError(errorMessage);
+      showToast.error(`Erro ao remover usuário: ${errorMessage}`);
       return false;
     }
   };
@@ -70,6 +82,8 @@ export const useUsuarios = (): UseUsuariosReturn => {
   return {
     usuarios,
     loading,
+    error,
+    carregarUsuarios,
     criarUsuario,
     atualizarUsuario,
     removerUsuario,

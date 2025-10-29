@@ -1,25 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { produtoService } from '../services/produtoService';
 import { showToast } from '../components/Toast';
-import { Categoria, ProdutoData } from '../types';
-
-export interface Produto {
-  id: number;
-  nome: string;
-  descricao?: string;
-  precoCusto: number;
-  precoVenda: number;
-  dataValidade?: string;
-  tipoMedida?: string;
-  codigoBarras?: string;
-  ativo: boolean;
-  categoria?: Categoria;
-}
-
-interface FiltrosProdutos {
-  nome?: string;
-  categoriaId?: number;
-}
+import { Produto, FiltrosProdutos } from '../types';
 
 interface UseProdutosReturn {
   produtos: Produto[];
@@ -27,9 +9,9 @@ interface UseProdutosReturn {
   error: string | null;
   filtros: FiltrosProdutos;
   carregarProdutos: () => void;
-  criarProduto: (produto: ProdutoData) => Promise<boolean>;
-  atualizarProduto: (id: number, produto: ProdutoData) => Promise<boolean>;
-  removerProduto: (id: number) => Promise<boolean>;
+  criarProduto: (formData: FormData) => Promise<boolean>;
+  atualizarProduto: (id: number, formData: FormData) => Promise<boolean>;
+  desativarProduto: (id: number) => Promise<boolean>;
   atualizarFiltros: (novosFiltros: Partial<FiltrosProdutos>) => void;
 }
 
@@ -45,63 +27,54 @@ export const useProdutos = (filtrosIniciais: FiltrosProdutos = {}): UseProdutosR
     try {
       const dados = await produtoService.listar(filtros);
       setProdutos(dados);
-    } catch (err) {
-      const errorMessage = (err as Error).message;
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
       setError(errorMessage);
-      showToast.error(errorMessage);
+      showToast.error(`Erro: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
   }, [filtros]);
 
-  const criarProduto = async (produto: ProdutoData): Promise<boolean> => {
-    setLoading(true);
+  const criarProduto = async (formData: FormData): Promise<boolean> => {
+    setError(null);
     try {
-      await produtoService.criar(produto);
-      await carregarProdutos();
+      await produtoService.criar(formData);
       showToast.success('Produto criado com sucesso!');
       return true;
-    } catch (err) {
-      const errorMessage = (err as Error).message;
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
       setError(errorMessage);
-      showToast.error(errorMessage);
+      showToast.error(`Erro: ${errorMessage}`);
       return false;
-    } finally {
-      setLoading(false);
     }
   };
 
-  const atualizarProduto = async (id: number, produto: ProdutoData): Promise<boolean> => {
-    setLoading(true);
+  const atualizarProduto = async (id: number, formData: FormData): Promise<boolean> => {
+    setError(null);
     try {
-      await produtoService.atualizar(id, produto);
-      await carregarProdutos();
+      await produtoService.atualizar(id, formData);
       showToast.success('Produto atualizado com sucesso!');
       return true;
-    } catch (err) {
-      const errorMessage = (err as Error).message;
+    } catch (err: unknown) {
+       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
       setError(errorMessage);
-      showToast.error(errorMessage);
+      showToast.error(`Erro: ${errorMessage}`);
       return false;
-    } finally {
-      setLoading(false);
     }
   };
 
-  const removerProduto = async (id: number): Promise<boolean> => {
-    setLoading(true);
+  const desativarProduto = async (id: number): Promise<boolean> => {
+    setError(null);
     try {
-      await produtoService.remover(id);
-      await carregarProdutos();
-      showToast.success('Produto removido com sucesso!');
+      await produtoService.desativar(id);
+      showToast.success('Status do produto alterado com sucesso!');
       return true;
-    } catch (err) {
-      const errorMessage = (err as Error).message;
+    } catch (err: unknown) {
+       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
       setError(errorMessage);
-      showToast.error(errorMessage);
+      showToast.error(`Erro: ${errorMessage}`);
       return false;
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -121,7 +94,7 @@ export const useProdutos = (filtrosIniciais: FiltrosProdutos = {}): UseProdutosR
     carregarProdutos,
     criarProduto,
     atualizarProduto,
-    removerProduto,
+    desativarProduto,
     atualizarFiltros,
   };
 };
