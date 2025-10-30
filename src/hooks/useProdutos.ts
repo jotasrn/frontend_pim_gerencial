@@ -28,9 +28,9 @@ export const useProdutos = (filtrosIniciais: FiltrosProdutos = {}): UseProdutosR
       const dados = await produtoService.listar(filtros);
       setProdutos(dados);
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao carregar produtos.';
       setError(errorMessage);
-      showToast.error(`Erro: ${errorMessage}`);
+      showToast.error(`Erro ao carregar produtos: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -45,7 +45,7 @@ export const useProdutos = (filtrosIniciais: FiltrosProdutos = {}): UseProdutosR
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
       setError(errorMessage);
-      showToast.error(`Erro: ${errorMessage}`);
+      showToast.error(`Erro ao criar produto: ${errorMessage}`);
       return false;
     }
   };
@@ -57,9 +57,9 @@ export const useProdutos = (filtrosIniciais: FiltrosProdutos = {}): UseProdutosR
       showToast.success('Produto atualizado com sucesso!');
       return true;
     } catch (err: unknown) {
-       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
       setError(errorMessage);
-      showToast.error(`Erro: ${errorMessage}`);
+      showToast.error(`Erro ao atualizar produto: ${errorMessage}`);
       return false;
     }
   };
@@ -71,9 +71,9 @@ export const useProdutos = (filtrosIniciais: FiltrosProdutos = {}): UseProdutosR
       showToast.success('Status do produto alterado com sucesso!');
       return true;
     } catch (err: unknown) {
-       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
       setError(errorMessage);
-      showToast.error(`Erro: ${errorMessage}`);
+      showToast.error(`Erro ao alterar status do produto: ${errorMessage}`);
       return false;
     }
   };

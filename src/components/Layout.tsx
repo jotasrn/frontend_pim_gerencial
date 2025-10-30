@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 import { NavLink, useNavigate, Link } from 'react-router-dom';
-import { Leaf, ShoppingBag, Users, Tag, BarChart2, User, LogOut, Bell, LayoutGrid, UserCircle } from 'lucide-react';
+import { Leaf, ShoppingBag, Users, Tag, BarChart2, User, LogOut, Bell, LayoutGrid, UserCircle,Truck} from 'lucide-react';
 import { useAuth, TipoUsuario } from '../contexts/AuthContext';
 
 interface LayoutProps {
@@ -30,6 +30,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
           { nome: 'Produtos', icone: <ShoppingBag size={20} />, path: '/gerente/produtos' },
           { nome: 'Promoções', icone: <Tag size={20} />, path: '/gerente/promocoes' },
           { nome: 'Clientes', icone: <User size={20} />, path: '/gerente/clientes' },
+          { nome: 'Fornecedores', icone: <Truck size={20} />, path: '/gerente/fornecedores' },
         ];
       default:
         return [

@@ -48,6 +48,7 @@ export interface Categoria {
   descricao?: string;
 }
 
+export type CategoriaData = Omit<Categoria, 'id'>;
 export interface Produto {
   id: number;
   nome: string;
@@ -62,17 +63,27 @@ export interface Produto {
   ativo: boolean;
   categoria?: Categoria;
   promocoes?: Promocao[];
+  estoque?: {
+    id: number;
+    quantidadeAtual: number;
+    quantidadeMinima?: number;
+  };
+  fornecedores?: Fornecedor[]; 
 }
+
 
 export type ProdutoData = Omit<Produto, 'id' | 'precoVenda' | 'categoria' | 'promocoes' | 'imagemUrl'> & {
   categoria: {
     id: number;
   };
+  quantidadeMinima?: number;
+  quantidadeAtual?: number; 
+  fornecedorIds?: number[];
 };
 
 export interface FiltrosProdutos {
   nome?: string;
-  categoriaId?: number | string; // Permitir string vindo do select
+  categoriaId?: number | string;
   ativo?: boolean;
 }
 
@@ -162,6 +173,7 @@ export interface Promocao {
   dataInicio: string;
   dataFim: string;
   ativa: boolean;
+  imagemUrl?: string;
   produtos?: Produto[];
 }
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Layout from '../../components/Layout';
-import { Plus, Edit, Trash2, Package } from 'lucide-react';
+import { Plus, Edit, Trash2, Package, AlertCircle } from 'lucide-react';
 import ProductForm from '../../components/forms/ProductForm';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import { useProdutos } from '../../hooks/useProdutos';
@@ -65,13 +65,14 @@ const ProductManagement: React.FC = () => {
     if (!productToDeactivate) return;
 
     setIsDeactivatingLoading(true);
+    // Chama a função correta do hook
     const success = await desativarProduto(productToDeactivate.id);
     setIsDeactivatingLoading(false);
 
     if (success) {
       setIsConfirmModalOpen(false);
       setProductToDeactivate(null);
-      carregarProdutos();
+      carregarProdutos(); // Recarrega a lista após desativar
     }
   };
 
@@ -98,6 +99,35 @@ const ProductManagement: React.FC = () => {
 
   }, [isFormOpen, carregarProdutos]);
 
+  // Função helper para renderizar o estoque
+  const renderEstoque = (produto: Produto) => {
+    if (!produto.estoque) {
+      return <span className="text-gray-400">-</span>;
+    }
+
+    const { quantidadeAtual, quantidadeMinima } = produto.estoque;
+    const min = quantidadeMinima ?? 0; // Trata se quantidadeMinima for null
+
+    if (quantidadeAtual <= min) {
+      return (
+        <span className="flex items-center text-red-600 font-semibold" title={`Estoque baixo! Mínimo: ${min}`}>
+          <AlertCircle className="w-4 h-4 mr-1.5" />
+          {quantidadeAtual}
+        </span>
+      );
+    }
+    
+     if (quantidadeAtual <= min * 1.5) { // Alerta "Atenção" (ex: 50% acima do mínimo)
+      return (
+        <span className="flex items-center text-yellow-600 font-medium" title={`Estoque em atenção. Mínimo: ${min}`}>
+          {quantidadeAtual}
+        </span>
+      );
+    }
+
+    return <span className="text-gray-900">{quantidadeAtual}</span>;
+  };
+
   return (
     <Layout title="Gerenciamento de Produtos">
       <div className="mb-6 flex justify-between items-center flex-wrap gap-4">
@@ -122,14 +152,15 @@ const ProductManagement: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Categoria</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço Venda</th>
-                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Validade</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estoque</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Validade</th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {listaProdutos.length === 0 && !loadingList ? (
-                 <tr><td colSpan={7} className="text-center py-6 text-gray-500">Nenhum produto cadastrado.</td></tr>
+                 <tr><td colSpan={8} className="text-center py-6 text-gray-500">Nenhum produto cadastrado.</td></tr>
               ) : (
                 listaProdutos.map((product) => (
                   <tr key={product.id} className={`hover:bg-gray-50 transition-colors ${!product.ativo ? 'opacity-60 bg-gray-50' : ''}`}>
@@ -147,6 +178,9 @@ const ProductManagement: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{product.nome}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">{product.categoria?.nome ?? 'N/A'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 font-semibold">{formatCurrency(product.precoVenda)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {renderEstoque(product)}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden lg:table-cell">{product.dataValidade ? formatDate(product.dataValidade) : '-'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <span className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -160,7 +194,7 @@ const ProductManagement: React.FC = () => {
                         <button onClick={() => handleOpenEditForm(product)} className="text-indigo-600 hover:text-indigo-900 transition-colors" title="Editar produto">
                           <Edit className="h-5 w-5" />
                         </button>
-                        <button onClick={() => handleOpenDeactivateModal(product)} className="text-red-600 hover:text-red-900 transition-colors" title={product.ativo ? "Desativar produto" : "Reativar (implementar)"}>
+                        <button onClick={() => handleOpenDeactivateModal(product)} className="text-red-600 hover:text-red-900 transition-colors" title={product.ativo ? "Desativar produto" : "Reativar produto"}>
                           <Trash2 className="h-5 w-5" />
                         </button>
                       </div>
