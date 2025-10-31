@@ -222,3 +222,44 @@ export interface EstoqueCriticoData {
   totalItens: number;
   itensCriticos: number;
 }
+
+export interface Faq {
+  id: number;
+  pergunta: string;
+  resposta: string;
+  categoria: string;
+  ativo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type FaqData = Omit<Faq, 'id' | 'createdAt' | 'updatedAt'>;
+
+export interface Duvida {
+  id: number;
+  usuario?: Usuario;
+  titulo: string;
+  pergunta: string;
+  publico: boolean;
+  status: string; 
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DuvidaResposta {
+  id: number;
+  respondente?: Usuario;
+  resposta: string;
+  visivelParaTodos: boolean;
+  createdAt: string;
+}
+
+export interface DuvidaRequest {
+  email: string;
+  titulo: string;
+  pergunta: string;
+}
+
+export interface DuvidaRespostaRequest {
+  resposta: string;
+}

@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo, ChangeEvent } from 'react';
-import { X, Package, DollarSign, Hash, Calendar, UploadCloud, Trash2, Archive, Truck, Plus} from 'lucide-react';
+import { X, Package, DollarSign, Hash, Calendar, UploadCloud, Trash2, Archive, Truck, Plus } from 'lucide-react';
 import { showToast } from '../Toast';
 import { useCategorias } from '../../hooks/useCategorias';
 import { useFornecedores } from '../../hooks/useFornecedores';
+import { useEstoque } from '../../hooks/useEstoque'; 
 import { Produto, ProdutoData, CategoriaData } from '../../types';
 
 interface CategoryFormModalProps {
@@ -33,10 +34,8 @@ const CategoryFormModal: React.FC<CategoryFormModalProps> = ({ isOpen, onClose, 
     }
     setError('');
     setLoading(true);
-    
     const success = await onSubmit({ nome, descricao });
     setLoading(false);
-    
     if (success) {
       onClose();
     }
@@ -110,7 +109,7 @@ type FormFields = {
   ativo: boolean;
 };
 
-type FormErrors = Partial<Record<keyof FormFields | 'imagem', string>>;
+type FormErrors = Partial<Record<keyof FormFields | 'imagem' | 'addStock', string>>;
 
 const ProductForm: React.FC<ProductFormProps> = ({
   isOpen,
@@ -121,6 +120,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
 }) => {
   const { categorias, loading: loadingCategorias, criarCategoria, carregarCategorias } = useCategorias();
   const { fornecedores, loading: loadingFornecedores } = useFornecedores();
+  const { adicionarEstoque, isAddingStock } = useEstoque();
 
   const initialFormFields = useMemo((): FormFields => ({
     nome: '',
@@ -144,6 +144,11 @@ const ProductForm: React.FC<ProductFormProps> = ({
   const [loading, setLoading] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [supplierSearchTerm, setSupplierSearchTerm] = useState('');
+  
+  const [showAddStock, setShowAddStock] = useState(false);
+  const [estoqueParaAdicionar, setEstoqueParaAdicionar] = useState('');
+  const [addStockError, setAddStockError] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (isOpen) {
@@ -171,6 +176,9 @@ const ProductForm: React.FC<ProductFormProps> = ({
       }
       setErrors({});
       setSupplierSearchTerm('');
+      setShowAddStock(false);
+      setEstoqueParaAdicionar('');
+      setAddStockError(null);
     }
   }, [initialData, isEditing, isOpen, initialFormFields]);
 
@@ -259,6 +267,41 @@ const ProductForm: React.FC<ProductFormProps> = ({
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+  
+  const handleAdicionarEstoqueClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault(); 
+      setAddStockError(null);
+
+      const quantidade = parseInt(estoqueParaAdicionar, 10);
+      if (isNaN(quantidade) || quantidade <= 0) {
+          setAddStockError('A quantidade a adicionar deve ser um número positivo.');
+          return;
+      }
+      if (!formData.dataColheita) {
+          setAddStockError('Data de Colheita/Produção é obrigatória para repor estoque.');
+          setErrors(prev => ({ ...prev, dataColheita: 'Campo obrigatório' }));
+          return;
+      }
+       if (!formData.dataValidade) {
+          setAddStockError('Data de Validade é obrigatória para repor estoque.');
+          setErrors(prev => ({ ...prev, dataValidade: 'Campo obrigatório' }));
+          return;
+      }
+
+      if (!initialData || !initialData.id) return;
+
+      const estoqueAtualizado = await adicionarEstoque(initialData.id, quantidade);
+
+      if (estoqueAtualizado) {
+          setFormData(prev => ({
+              ...prev,
+              quantidadeAtual: estoqueAtualizado.quantidadeAtual.toString()
+          }));
+          setEstoqueParaAdicionar('');
+          setShowAddStock(false);
+          setAddStockError(null);
+      }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -268,6 +311,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
     }
 
     setLoading(true);
+    let success = false;
 
     try {
       const submissionData = new FormData();
@@ -282,9 +326,12 @@ const ProductForm: React.FC<ProductFormProps> = ({
         codigoBarras: formData.codigoBarras,
         ativo: formData.ativo,
         quantidadeMinima: parseInt(formData.quantidadeMinima, 10),
-        ...(!isEditing && { quantidadeAtual: parseInt(formData.quantidadeAtual, 10) }),
         fornecedorIds: formData.fornecedorIds,
       };
+      
+      if (!isEditing) {
+          produtoJsonData.quantidadeAtual = parseInt(formData.quantidadeAtual, 10);
+      }
 
       submissionData.append('produto', JSON.stringify(produtoJsonData));
 
@@ -292,19 +339,18 @@ const ProductForm: React.FC<ProductFormProps> = ({
         submissionData.append('imagem', imageFile);
       }
 
-      const success = await onSubmit(submissionData);
+      success = await onSubmit(submissionData);
 
+    } catch (err) {
+      console.error("Erro no handleSubmit do ProductForm:", err);
+      success = false; 
+    } finally {
+      setLoading(false);
       if (success) {
         setTimeout(() => {
             onClose();
         }, 50);
       }
-
-    } catch (err) {
-      console.error("Erro no handleSubmit do ProductForm:", err);
-      showToast.error('Erro ao salvar produto. Verifique os dados ou o console.');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -383,15 +429,17 @@ const ProductForm: React.FC<ProductFormProps> = ({
                   </div>
                   <div>
                       <label htmlFor="data-colheita" className="block text-sm font-medium text-gray-700 mb-1">
-                          <Calendar className="w-4 h-4 inline mr-1 text-gray-500" /> Colheita/Produção
+                          <Calendar className="w-4 h-4 inline mr-1 text-gray-500" /> Colheita/Produção *
                       </label>
-                      <input id="data-colheita" type="date" value={formData.dataColheita} onChange={(e) => handleInputChange('dataColheita', e.target.value)} className="input" disabled={loading} />
+                      <input id="data-colheita" type="date" value={formData.dataColheita} onChange={(e) => handleInputChange('dataColheita', e.target.value)} className={`input ${errors.dataColheita ? 'input-error' : ''}`} disabled={loading} />
+                      {errors.dataColheita && <p className="text-red-500 text-xs mt-1">{errors.dataColheita}</p>}
                   </div>
                   <div>
                       <label htmlFor="data-validade" className="block text-sm font-medium text-gray-700 mb-1">
-                          <Calendar className="w-4 h-4 inline mr-1 text-gray-500" /> Data de Validade
+                          <Calendar className="w-4 h-4 inline mr-1 text-gray-500" /> Data de Validade *
                       </label>
-                      <input id="data-validade" type="date" value={formData.dataValidade} onChange={(e) => handleInputChange('dataValidade', e.target.value)} className="input" disabled={loading} />
+                      <input id="data-validade" type="date" value={formData.dataValidade} onChange={(e) => handleInputChange('dataValidade', e.target.value)} className={`input ${errors.dataValidade ? 'input-error' : ''}`} disabled={loading} />
+                      {errors.dataValidade && <p className="text-red-500 text-xs mt-1">{errors.dataValidade}</p>}
                   </div>
               </div>
             </fieldset>
@@ -399,16 +447,32 @@ const ProductForm: React.FC<ProductFormProps> = ({
             <fieldset className="border rounded-md p-4">
               <legend className="text-base font-medium text-gray-900 px-2">Controle de Estoque</legend>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-2">
-                  {!isEditing && (
-                      <div>
-                          <label htmlFor="quantidadeAtual" className="block text-sm font-medium text-gray-700 mb-1">
-                              <Archive className="w-4 h-4 inline mr-1 text-gray-500" /> Estoque Inicial *
-                          </label>
-                          <input id="quantidadeAtual" type="number" step="1" min="0" value={formData.quantidadeAtual} onChange={(e) => handleInputChange('quantidadeAtual', e.target.value)} className={`input ${errors.quantidadeAtual ? 'input-error' : ''}`} disabled={loading} />
-                          {errors.quantidadeAtual && <p className="text-red-500 text-xs mt-1">{errors.quantidadeAtual}</p>}
+                  <div>
+                      <label htmlFor="quantidadeAtual" className="block text-sm font-medium text-gray-700 mb-1">
+                          <Archive className="w-4 h-4 inline mr-1 text-gray-500" /> Estoque Atual *
+                      </label>
+                      <div className="flex items-center space-x-2">
+                        <input id="quantidadeAtual" type="number" step="1" min="0" value={formData.quantidadeAtual} 
+                          onChange={(e) => handleInputChange('quantidadeAtual', e.target.value)} 
+                          className={`input ${errors.quantidadeAtual ? 'input-error' : ''}`} 
+                          disabled={isEditing || loading} // Desabilitado na edição
+                        />
+                        {isEditing && (
+                            <button 
+                                type="button" 
+                                onClick={() => setShowAddStock(!showAddStock)} 
+                                className="p-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200" 
+                                title="Repor estoque"
+                                disabled={loading || isAddingStock}
+                            >
+                                <Plus className="w-5 h-5" />
+                            </button>
+                        )}
                       </div>
-                  )}
-                  <div className={isEditing ? 'md:col-span-2' : ''}>
+                      {errors.quantidadeAtual && <p className="text-red-500 text-xs mt-1">{errors.quantidadeAtual}</p>}
+                  </div>
+                  
+                  <div>
                       <label htmlFor="quantidadeMinima" className="block text-sm font-medium text-gray-700 mb-1">
                           <Archive className="w-4 h-4 inline mr-1 text-gray-500" /> Estoque Mínimo *
                       </label>
@@ -416,6 +480,49 @@ const ProductForm: React.FC<ProductFormProps> = ({
                       {errors.quantidadeMinima && <p className="text-red-500 text-xs mt-1">{errors.quantidadeMinima}</p>}
                   </div>
               </div>
+              
+              {isEditing && showAddStock && (
+                <div className="mt-4 p-4 border border-blue-200 bg-blue-50 rounded-md">
+                   <h4 className="text-sm font-medium text-gray-800 mb-2">Repor Estoque</h4>
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                       <div>
+                           <label htmlFor="estoque-para-adicionar" className="block text-xs font-medium text-gray-600 mb-1">Quantidade a Adicionar *</label>
+                           <input 
+                                id="estoque-para-adicionar" 
+                                type="number" 
+                                step="1" 
+                                min="1" 
+                                value={estoqueParaAdicionar}
+                                onChange={(e) => {
+                                    setEstoqueParaAdicionar(e.target.value);
+                                    if(addStockError) setAddStockError(null);
+                                }}
+                                className={`input ${addStockError ? 'input-error' : ''}`}
+                                placeholder="0"
+                                disabled={isAddingStock || loading}
+                           />
+                       </div>
+                       <div className="md:col-span-2 flex items-end">
+                            <button 
+                                type="button" 
+                                onClick={handleAdicionarEstoqueClick}
+                                disabled={isAddingStock || loading}
+                                className="w-full md:w-auto inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none disabled:opacity-50"
+                            >
+                               {isAddingStock && (
+                                   <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                   </svg>
+                               )}
+                               {isAddingStock ? 'Adicionando...' : 'Confirmar Reposição'}
+                            </button>
+                       </div>
+                   </div>
+                   {addStockError && <p className="text-red-500 text-xs mt-2">{addStockError}</p>}
+                   <p className="text-xs text-gray-500 mt-2">Nota: Para repor o estoque, as datas de Colheita e Validade acima devem estar preenchidas.</p>
+                </div>
+              )}
             </fieldset>
 
             <fieldset className="border rounded-md p-4">
@@ -518,7 +625,6 @@ const ProductForm: React.FC<ProductFormProps> = ({
           </form>
         </div>
 
-        {/* Modal de Categoria (aninhado) */}
         <CategoryFormModal
             isOpen={isCategoryModalOpen}
             onClose={() => setIsCategoryModalOpen(false)}

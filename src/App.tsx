@@ -16,6 +16,8 @@ import CustomerList from './pages/manager/CustomerList';
 import CategoryManagement from './pages/manager/CategoryManagement';
 import UserProfile from './pages/UserProfile';
 import FornecedorManagement from './pages/manager/FornecedorManagement';
+import FaqManagement from './pages/manager/FaqManagement';
+import DuvidasManagement from './pages/manager/DuvidasManagement';
 // import StockManagement from './pages/manager/StockManagement';       // Descomentar quando criar
 // import OrderManagement from './pages/manager/OrderManagement';         // Descomentar quando criar
 // import DeliveryManagement from './pages/manager/DeliveryManagement';   // Descomentar quando criar
@@ -27,23 +29,13 @@ import FornecedorManagement from './pages/manager/FornecedorManagement';
 function App() {
   return (
     <ApiErrorBoundary>
-      {/* 2. Provedor de Autenticação envolve tudo para gerenciar o estado do usuário */}
       <AuthProvider>
-        {/* 3. Configuração do Roteador */}
         <Router>
-          {/* 4. Container para exibir toasts/notificações */}
           <ToastContainer />
-          {/* 5. Container principal da aplicação */}
-          <div className="min-h-screen bg-gray-100"> {/* Mudado bg-gray-50 para bg-gray-100 para combinar com Layout */}
-            {/* 6. Definição das Rotas */}
+          <div className="min-h-screen bg-gray-100">
             <Routes>
-              {/* Rota Pública */}
               <Route path="/login" element={<Login />} />
-
-              {/* Rota Raiz: Redireciona para o Dashboard principal */}
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
-
-              {/* Rota de Dashboard Principal (Protegida, redireciona para o específico) */}
               <Route
                 path="/dashboard"
                 element={<ProtectedRoute><Dashboard /></ProtectedRoute>}
@@ -70,7 +62,6 @@ function App() {
                 path="/gerente/clientes"
                 element={<ProtectedRoute permissaoRequerida="gerente"><CustomerList /></ProtectedRoute>}
               />
-
               <Route
                 path="/gerente/categorias"
                 element={<ProtectedRoute permissaoRequerida="gerente"><CategoryManagement /></ProtectedRoute>}
@@ -82,6 +73,14 @@ function App() {
               <Route
                 path="/gerente/fornecedores"
                 element={<ProtectedRoute permissaoRequerida="gerente"><FornecedorManagement /></ProtectedRoute>}
+              />
+              <Route
+                path="/gerente/faq"
+                element={<ProtectedRoute permissaoRequerida="gerente"><FaqManagement /></ProtectedRoute>}
+              />
+              <Route
+                path="/gerente/duvidas"
+                element={<ProtectedRoute permissaoRequerida="gerente"><DuvidasManagement /></ProtectedRoute>}
               />
               {/* Adicionar Rotas para as Novas Páginas do Gerente Aqui: */}
               {/*
