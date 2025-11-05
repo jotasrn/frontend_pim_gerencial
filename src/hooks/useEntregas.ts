@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { entregaService } from '../services/entregaService';
 import { useAuth } from '../contexts/AuthContext';
 import { showToast } from '../components/Toast';
-import { Entrega, FiltrosEntregas } from '../types'; 
+import { Entrega, FiltrosEntregas, EntregaStatusUpdate } from '../types';
 
 interface UseEntregasReturn {
   entregas: Entrega[];
@@ -11,26 +11,25 @@ interface UseEntregasReturn {
   filtros: FiltrosEntregas;
   carregarEntregas: () => void;
   associarEntregador: (entregaId: number, entregadorId: number) => Promise<boolean>;
-  atualizarStatus: (entregaId: number, status: string) => Promise<boolean>;
+  atualizarStatus: (entregaId: number, data: EntregaStatusUpdate) => Promise<boolean>;
   atualizarFiltros: (novosFiltros: Partial<FiltrosEntregas>) => void;
 }
 
 export const useEntregas = (filtrosIniciais: FiltrosEntregas = {}): UseEntregasReturn => {
-  // Tipamos os estados
+
   const [entregas, setEntregas] = useState<Entrega[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [filtros, setFiltros] = useState<FiltrosEntregas>(filtrosIniciais);
-  const { usuario } = useAuth(); // Usamos 'usuario' em vez de 'user'
+  const { usuario } = useAuth();
 
   const carregarEntregas = useCallback(async () => {
-    if (!usuario) return; // Não faz nada se o usuário não estiver carregado
+    if (!usuario) return;
 
     setLoading(true);
     setError(null);
     try {
       let dados: Entrega[];
-      // A lógica muda com base na permissão do usuário
       if (usuario.permissao === 'entregador') {
         dados = await entregaService.listarMinhasEntregas();
       } else {
@@ -68,7 +67,7 @@ export const useEntregas = (filtrosIniciais: FiltrosEntregas = {}): UseEntregasR
     }
   };
 
-  const atualizarStatus = async (entregaId: number, status: string): Promise<boolean> => {
+  const atualizarStatus = async (entregaId: number, data: EntregaStatusUpdate): Promise<boolean> => {
     if (usuario?.permissao !== 'entregador') {
       showToast.error('Apenas entregadores podem atualizar o status.');
       return false;
@@ -76,7 +75,7 @@ export const useEntregas = (filtrosIniciais: FiltrosEntregas = {}): UseEntregasR
 
     setLoading(true);
     try {
-      await entregaService.atualizarStatus(entregaId, status);
+      await entregaService.atualizarStatus(entregaId, data);
       await carregarEntregas();
       showToast.success('Status da entrega atualizado!');
       return true;
@@ -97,7 +96,6 @@ export const useEntregas = (filtrosIniciais: FiltrosEntregas = {}): UseEntregasR
   };
 
   useEffect(() => {
-    // Carrega as entregas assim que o usuário é definido
     if (usuario) {
       carregarEntregas();
     }

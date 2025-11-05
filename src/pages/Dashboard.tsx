@@ -13,6 +13,12 @@ const Dashboard: React.FC = () => {
         case 'gerente':
           navigate('/gerente', { replace: true });
           break;
+        case 'entregador':
+          navigate('/entregador', { replace: true });
+          break;
+        case 'estoquista':
+          navigate('/estoquista', { replace: true });
+          break;
         default:
           navigate('/login', { replace: true });
           break;

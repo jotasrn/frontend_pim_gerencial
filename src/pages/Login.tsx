@@ -36,8 +36,7 @@ const Login: React.FC = () => {
   }
 
   if (usuario) {
-    const redirectPath = usuario.permissao === 'gerente' ? '/gerente' : '/dashboard';
-    return <Navigate to={redirectPath} replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return (

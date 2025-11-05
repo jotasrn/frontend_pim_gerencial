@@ -7,24 +7,24 @@ interface ApiErrorResponse {
   error?: string;
 }
 
+const handleError = (error: unknown, defaultMessage: string): string => {
+  if (axios.isAxiosError(error)) {
+    const axiosError = error as AxiosError<ApiErrorResponse>;
+    return axiosError.response?.data?.message || axiosError.message || defaultMessage;
+  } else if (error instanceof Error) {
+    return error.message || defaultMessage;
+  }
+  return defaultMessage;
+};
+
 export const clienteService = {
   listar: async (): Promise<Cliente[]> => {
     try {
-      // Chama o endpoint real do backend
       const response = await api.get<Cliente[]>('/clientes');
-      // A API retorna Cliente[], que pode ter usuario aninhado
       return response.data;
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Erro ao listar clientes:', error);
-      let errorMessage = 'Não foi possível carregar os clientes.';
-      if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError<ApiErrorResponse>;
-        errorMessage = axiosError.response?.data?.message || axiosError.message || errorMessage;
-      } else if (error instanceof Error) {
-        errorMessage = error.message || errorMessage;
-      }
-      throw new Error(errorMessage);
+      throw new Error(handleError(error, 'Não foi possível carregar os clientes.'));
     }
   },
-  // REMOVIDAS: Funções criar, atualizar, remover (se existissem)
 };

@@ -50,8 +50,8 @@ export const fornecedorService = {
 
   atualizar: async (id: number, fornecedor: FornecedorData): Promise<Fornecedor> => {
     try {
-      console.warn(`Endpoint PUT /fornecedores/${id} não implementado no backend. Simulação.`);
-      return { id, ...fornecedor };
+      const response = await api.put<Fornecedor>(`/fornecedores/${id}`, fornecedor);
+      return response.data;
     } catch (error) {
       throw new Error(handleError(error, 'Não foi possível atualizar o fornecedor.'));
     }
@@ -59,10 +59,9 @@ export const fornecedorService = {
 
   remover: async (id: number): Promise<void> => {
     try {
-     console.warn(`Endpoint DELETE /fornecedores/${id} não implementado no backend. Simulação.`);
-      return;
+      await api.delete(`/fornecedores/${id}`);
     } catch (error) {
-       throw new Error(handleError(error, 'Não foi possível remover o fornecedor.'));
+      throw new Error(handleError(error, 'Não foi possível remover o fornecedor.'));
     }
   }
 };

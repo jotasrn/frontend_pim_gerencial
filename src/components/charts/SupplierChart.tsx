@@ -20,7 +20,6 @@ ChartJS.register(
   Legend
 );
 
-// --- Tipagem Específica dos Dados ---
 type BarChartDataType = ChartData<'bar', number[], string>;
 
 export const ProductsBySupplierChart: React.FC<{ data: BarChartDataType }> = ({ data }) => {
@@ -40,7 +39,6 @@ export const ProductsBySupplierChart: React.FC<{ data: BarChartDataType }> = ({ 
         beginAtZero: true,
         ticks: {
           callback: function(value: number | string) {
-            // Garante que o valor é tratado como número antes de concatenar
             const numericValue = typeof value === 'string' ? parseFloat(value) : value;
             if (Number.isInteger(numericValue)) {
               return numericValue + ' produtos';

@@ -147,7 +147,7 @@ const ManagerDashboard: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600 hover:underline cursor-pointer">#{order.id}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {/* Acesso seguro aos dados do cliente/usuário */}
-                      {order.cliente?.usuario?.nomeCompleto || 'Cliente não identificado'}
+                      {order.cliente?.nomeCompleto || 'Cliente não identificado'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 font-medium">{formatCurrency(order.valorTotal)}</td>
                     <td className="px-6 py-4 whitespace-nowrap">

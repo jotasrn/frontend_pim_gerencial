@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import api from '../services/api';
 
-export type TipoUsuario = 'gerente' | 'entregador';
+export type TipoUsuario = 'gerente' | 'entregador' | 'estoquista';
 
 export interface Usuario {
   id: number;
@@ -24,15 +24,12 @@ export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
-  const [carregando, setCarregando] = useState(true); // Inicia como true para verificar a sessão
-
-  // Verifica se o usuário já tem uma sessão ativa ao carregar o app
+  const [carregando, setCarregando] = useState(true);
   useEffect(() => {
     const verificarStatusAuth = async () => {
       const token = localStorage.getItem('token');
 
       if (token) {
-        // Se temos um token, validamos ele no back-end e buscamos os dados do usuário
         try {
           api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           const resposta = await api.get('/usuarios/me');
@@ -45,7 +42,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           };
           setUsuario(dadosUsuario);
         } catch (error) {
-          // Se o token for inválido, limpa tudo
           console.error('Sessão inválida, limpando token:', error);
           localStorage.removeItem('token');
           localStorage.removeItem('user');
@@ -57,12 +53,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     verificarStatusAuth();
   }, []);
 
-  // Função de Login conectada à API
   const login = async (email: string, senha: string) => {
     try {
       setCarregando(true);
       
-      // 1. Chama o endpoint de login
       const respostaLogin = await api.post('/auth/login', { email, senha });
       const { token } = respostaLogin.data;
 
@@ -70,11 +64,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         throw new Error('Token não recebido da API');
       }
 
-      // 2. Salva o token e configura no Axios para futuras requisições
       localStorage.setItem('token', token);
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-      // 3. Busca os dados do usuário com o novo token
       const respostaUsuario = await api.get('/usuarios/me');
       const dadosUsuario: Usuario = {
         id: respostaUsuario.data.id,
@@ -88,7 +80,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     } catch (error) {
       console.error('Falha no login:', error);
-      // Garante que tudo seja limpo em caso de erro
       logout();
       throw error;
     } finally {
@@ -96,7 +87,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  // Função de Logout
   const logout = () => {
     setUsuario(null);
     localStorage.removeItem('token');
@@ -104,12 +94,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     delete api.defaults.headers.common['Authorization'];
   };
 
-  // Verifica a permissão do usuário logado
   const verificarPermissao = (permissaoRequerida: TipoUsuario): boolean => {
     return usuario?.permissao === permissaoRequerida;
   };
 
-  // Valor que será disponibilizado para toda a aplicação
   const valor = {
     usuario,
     carregando,

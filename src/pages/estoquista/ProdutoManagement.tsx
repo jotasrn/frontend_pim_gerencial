@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Layout from '../../components/Layout';
 import { Plus, Edit, Trash2, Package, AlertCircle } from 'lucide-react';
-import ProductForm from '../../components/forms/ProductForm';
-import ConfirmationModal from '../../components/ConfirmationModal';
+import ProductForm from '../../components/forms/ProdutoForm';
+import ConfirmationModal from '../../components/ConfirmacaoModal';
 import { useProdutos } from '../../hooks/useProdutos';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { formatCurrency, formatDate } from '../../utils/apiHelpers';
@@ -65,14 +65,13 @@ const ProductManagement: React.FC = () => {
     if (!productToDeactivate) return;
 
     setIsDeactivatingLoading(true);
-    // Chama a função correta do hook
     const success = await desativarProduto(productToDeactivate.id);
     setIsDeactivatingLoading(false);
 
     if (success) {
       setIsConfirmModalOpen(false);
       setProductToDeactivate(null);
-      carregarProdutos(); // Recarrega a lista após desativar
+      carregarProdutos();
     }
   };
 
@@ -99,14 +98,13 @@ const ProductManagement: React.FC = () => {
 
   }, [isFormOpen, carregarProdutos]);
 
-  // Função helper para renderizar o estoque
   const renderEstoque = (produto: Produto) => {
     if (!produto.estoque) {
       return <span className="text-gray-400">-</span>;
     }
 
     const { quantidadeAtual, quantidadeMinima } = produto.estoque;
-    const min = quantidadeMinima ?? 0; // Trata se quantidadeMinima for null
+    const min = quantidadeMinima ?? 0; 
 
     if (quantidadeAtual <= min) {
       return (
@@ -117,7 +115,7 @@ const ProductManagement: React.FC = () => {
       );
     }
     
-     if (quantidadeAtual <= min * 1.5) { // Alerta "Atenção" (ex: 50% acima do mínimo)
+     if (quantidadeAtual <= min * 1.5) { 
       return (
         <span className="flex items-center text-yellow-600 font-medium" title={`Estoque em atenção. Mínimo: ${min}`}>
           {quantidadeAtual}

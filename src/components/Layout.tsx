@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 import { NavLink, useNavigate, Link } from 'react-router-dom';
-import { Leaf, ShoppingBag, Users, Tag, BarChart2, User, LogOut, Bell, LayoutGrid, UserCircle, Truck, HelpCircle, BookOpen } from 'lucide-react';
+import { Leaf, Users, Tag, BarChart2, User, LogOut, Bell, LayoutGrid, Clock, UserCircle, Truck, HelpCircle, BookOpen, Package } from 'lucide-react';
 import { useAuth, TipoUsuario } from '../contexts/AuthContext';
 
 interface LayoutProps {
@@ -26,13 +26,22 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
         return [
           { nome: 'Dashboard', icone: <BarChart2 size={20} />, path: '/gerente' },
           { nome: 'Usuários', icone: <Users size={20} />, path: '/gerente/usuarios' },
-          { nome: 'Categorias', icone: <LayoutGrid size={20} />, path: '/gerente/categorias' },
-          { nome: 'Produtos', icone: <ShoppingBag size={20} />, path: '/gerente/produtos' },
           { nome: 'Promoções', icone: <Tag size={20} />, path: '/gerente/promocoes' },
           { nome: 'Clientes', icone: <User size={20} />, path: '/gerente/clientes' },
-          { nome: 'Fornecedores', icone: <Truck size={20} />, path: '/gerente/fornecedores' },
           { nome: 'FAQs Estáticos', icone: <BookOpen size={20} />, path: '/gerente/faq' },
           { nome: 'Dúvidas Clientes', icone: <HelpCircle size={20} />, path: '/gerente/duvidas' },
+        ];
+      case 'estoquista':
+        return [
+          { nome: 'Produtos', icone: <Package size={20} />, path: '/estoquista/produtos' },
+          { nome: 'Categorias', icone: <LayoutGrid size={20} />, path: '/estoquista/categorias' },
+          { nome: 'Fornecedores', icone: <Truck size={20} />, path: '/estoquista/fornecedores' },
+          // { nome: 'Perdas', icone: <Archive size={20} />, path: '/estoquista/perdas' }, // Adicione quando criar a tela
+        ];
+      case 'entregador':
+        return [
+          { nome: 'Minhas Entregas', icone: <Truck size={20} />, path: '/entregador' },
+          { nome: 'Histórico', icone: <Clock size={20} />, path: '/entregador/historico' },
         ];
       default:
         return [
@@ -49,6 +58,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
   const getRoleLabel = (permissao: TipoUsuario) => {
     if (permissao === 'gerente') return 'Gerente';
     if (permissao === 'entregador') return 'Entregador';
+    if (permissao === 'estoquista') return 'Estoquista';
     return permissao;
   }
 
@@ -69,7 +79,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
                   className={({ isActive }) =>
                     `w-full flex items-center px-4 py-2 rounded-md transition-colors duration-200 ${isActive
                       ? 'bg-green-100 text-green-700 font-semibold'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800' // Hover mais sutil
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
                     }`
                   }
                 >
@@ -111,7 +121,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
 
               <div className='flex items-center'>
                 <Link to="/perfil" className="mr-2 font-medium text-gray-700 hover:text-green-600">
-                  {usuario?.nomeCompleto || usuario?.nomeCompleto || 'Usuário'}
+                  {usuario?.nomeCompleto || 'Usuário'}
                 </Link>
                 {usuario?.permissao && (
                   <span className="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 rounded-full capitalize select-none">

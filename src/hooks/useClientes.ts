@@ -21,7 +21,7 @@ export const useClientes = (): UseClientesReturn => {
     try {
       const dados = await clienteService.listar();
       setClientes(dados);
-    } catch (err: unknown) { 
+    } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
       setError(errorMessage);
       showToast.error(`Erro ao carregar clientes: ${errorMessage}`);

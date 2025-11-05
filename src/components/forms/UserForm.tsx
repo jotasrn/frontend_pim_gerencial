@@ -15,9 +15,7 @@ interface UserFormData {
 interface UserFormProps {
   isOpen: boolean;
   onClose: () => void;
-  // --- CORREÇÃO AQUI ---
-  onSubmit: (userData: UsuarioData | Partial<UsuarioData>) => Promise<boolean>; // <-- Alterado para Promise<boolean>
-  // --- FIM DA CORREÇÃO ---
+  onSubmit: (userData: UsuarioData | Partial<UsuarioData>) => Promise<boolean>;
   initialData?: Usuario | null;
   isEditing?: boolean;
 }
@@ -34,7 +32,7 @@ const UserForm: React.FC<UserFormProps> = ({
     email: '',
     senha: '',
     confirmarSenha: '',
-    permissao: 'gerente', // Default para gerente
+    permissao: 'gerente',
     ativo: true,
   }), []);
 
@@ -46,9 +44,9 @@ const UserForm: React.FC<UserFormProps> = ({
     if (isOpen) {
       if (isEditing && initialData) {
         setFormData({
-          nomeCompleto: initialData.nomeCompleto || '', // Prioriza nomeCompleto
+          nomeCompleto: initialData.nomeCompleto || '',
           email: initialData.email || '',
-          senha: '', // Senha nunca é preenchida na edição
+          senha: '',
           confirmarSenha: '',
           permissao: initialData.permissao || 'gerente',
           ativo: initialData.ativo ?? true,
@@ -62,8 +60,8 @@ const UserForm: React.FC<UserFormProps> = ({
 
   const roles = [
     { value: 'gerente', label: 'Gerente' },
+    { value: 'estoquista', label: 'Estoquista' },
     { value: 'entregador', label: 'Entregador' },
-    // Adicionar 'cliente' se for gerenciar clientes aqui também
   ];
 
   const handleInputChange = (field: keyof UserFormData, value: string | boolean) => {
@@ -82,14 +80,13 @@ const UserForm: React.FC<UserFormProps> = ({
     if (!formData.nomeCompleto.trim()) newErrors.nomeCompleto = 'Nome completo é obrigatório';
     if (!formData.email.trim() || !/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email inválido';
 
-    // Valida senha apenas ao criar ou se ela for preenchida na edição
     if (!isEditing || (isEditing && formData.senha)) {
-        if (!formData.senha || formData.senha.length < 6) {
-            newErrors.senha = 'Senha deve ter no mínimo 6 caracteres';
-        }
-        if (formData.senha !== formData.confirmarSenha) {
-            newErrors.confirmarSenha = 'As senhas não coincidem';
-        }
+      if (!formData.senha || formData.senha.length < 6) {
+        newErrors.senha = 'Senha deve ter no mínimo 6 caracteres';
+      }
+      if (formData.senha !== formData.confirmarSenha) {
+        newErrors.confirmarSenha = 'As senhas não coincidem';
+      }
     }
 
     setErrors(newErrors);
@@ -105,29 +102,24 @@ const UserForm: React.FC<UserFormProps> = ({
 
     setLoading(true);
     try {
-      // Prepara os dados para envio
       const submitData: Partial<UsuarioData> = {
-          nomeCompleto: formData.nomeCompleto,
-          email: formData.email,
-          permissao: formData.permissao,
-          ativo: formData.ativo,
+        nomeCompleto: formData.nomeCompleto,
+        email: formData.email,
+        permissao: formData.permissao,
+        ativo: formData.ativo,
       };
 
-      // Inclui senha apenas se for criação ou se foi preenchida na edição
-       if (!isEditing || (isEditing && formData.senha)) {
-          submitData.senha = formData.senha;
-       }
+      if (!isEditing || (isEditing && formData.senha)) {
+        submitData.senha = formData.senha;
+      }
 
-
-      // Chama o onSubmit do pai (que retorna boolean)
-      await onSubmit(submitData as UsuarioData); // Faz cast para UsuarioData
-      // O pai (UserManagement) fechará o modal se onSubmit retornar true
+      await onSubmit(submitData as UsuarioData);
 
     } catch (error) {
       console.error("Erro inesperado no handleSubmit do UserForm:", error);
       showToast.error("Ocorreu um erro inesperado no formulário.");
     } finally {
-      setLoading(false); // Desliga o loading independentemente do resultado
+      setLoading(false);
     }
   };
 
@@ -171,23 +163,22 @@ const UserForm: React.FC<UserFormProps> = ({
               </div>
             </div>
           </div>
-           <div>
-              <label htmlFor="user-permissao" className="block text-sm font-medium text-gray-700 mb-1">Função *</label>
-              <select
-                id="user-permissao" value={formData.permissao}
-                onChange={(e) => handleInputChange('permissao', e.target.value as TipoUsuario)}
-                className="select w-full"
-                disabled={loading} >
-                {roles.map((role) => (
-                  <option key={role.value} value={role.value}>{role.label}</option>
-                ))}
-              </select>
-            </div>
+          <div>
+            <label htmlFor="user-permissao" className="block text-sm font-medium text-gray-700 mb-1">Função *</label>
+            <select
+              id="user-permissao" value={formData.permissao}
+              onChange={(e) => handleInputChange('permissao', e.target.value as TipoUsuario)}
+              className="select w-full"
+              disabled={loading} >
+              {roles.map((role) => (
+                <option key={role.value} value={role.value}>{role.label}</option>
+              ))}
+            </select>
+          </div>
 
-          {/* Seção de Senha (Condicional) */}
           <div>
             <h3 className="text-base font-medium text-gray-800 mb-3 border-b pb-2">
-                {isEditing ? 'Alterar Senha (Opcional)' : 'Definir Senha *'}
+              {isEditing ? 'Alterar Senha (Opcional)' : 'Definir Senha *'}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
@@ -210,7 +201,7 @@ const UserForm: React.FC<UserFormProps> = ({
                   id="user-confirmarSenha" type="password" value={formData.confirmarSenha}
                   onChange={(e) => handleInputChange('confirmarSenha', e.target.value)}
                   className={`input ${errors.confirmarSenha ? 'input-error' : ''}`}
-                   placeholder={isEditing ? 'Deixe em branco para manter a atual' : 'Repita a senha'}
+                  placeholder={isEditing ? 'Deixe em branco para manter a atual' : 'Repita a senha'}
                   disabled={loading} />
                 {errors.confirmarSenha && <p className="text-red-500 text-xs mt-1">{errors.confirmarSenha}</p>}
               </div>
@@ -237,10 +228,10 @@ const UserForm: React.FC<UserFormProps> = ({
               type="submit" disabled={loading}
               className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed" >
               {loading && (
-                 <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                 </svg>
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
               )}
               {loading ? 'Salvando...' : (isEditing ? 'Atualizar Usuário' : 'Criar Usuário')}
             </button>

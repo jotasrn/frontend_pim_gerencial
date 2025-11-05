@@ -28,7 +28,7 @@ export const useRelatorios = (): UseRelatoriosReturn => {
   const [perdasPorMotivo, setPerdasPorMotivo] = useState<PerdasMotivoData[]>([]);
   const [niveisEstoque, setNiveisEstoque] = useState<NiveisEstoqueData[]>([]);
   const [estoqueCritico, setEstoqueCritico] = useState<EstoqueCriticoData | null>(null);
-  const [vendasRecentes, setVendasRecentes] = useState<Venda[]>([]);
+  const [vendasRecentes, setVendasRecentes] = useState<Venda[]>([]); // <--- Garantido como array
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -70,12 +70,13 @@ export const useRelatorios = (): UseRelatoriosReturn => {
       showToast.error(errorMessage);
       console.error("Erro detalhado ao carregar relatórios:", err);
 
+      // Define como arrays vazios em caso de erro
       setVendasPorCategoria([]);
       setTopProdutos([]);
       setPerdasPorMotivo([]);
       setNiveisEstoque([]);
       setEstoqueCritico(null);
-      setVendasRecentes([]);
+      setVendasRecentes([]); // <--- Garantido como array
     } finally {
       setLoading(false);
     }

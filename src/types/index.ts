@@ -20,12 +20,13 @@ export type UsuarioData = {
   ativo: boolean;
 };
 
-export interface Cliente {
+export interface Cliente{
   id: number;
-  usuario?: Usuario;
-  cpf?: string;
-  telefone?: string;
-  enderecos?: Endereco[];
+  nomeCompleto: string; 
+  email: string; 
+  cpf: string;   
+  telefone: string; 
+  ativo: boolean;
 }
 
 export interface Endereco {
@@ -124,6 +125,7 @@ export interface Entrega {
   entregadorId?: number;
   status: string;
   dataEntrega?: string;
+  dataConclusao?: string;
 }
 
 export interface FiltrosEntregas {
@@ -262,4 +264,10 @@ export interface DuvidaRequest {
 
 export interface DuvidaRespostaRequest {
   resposta: string;
+}
+
+export interface EntregaStatusUpdate {
+  status: string;
+  nomeRecebedor?: string;
+  documentoRecebedor?: string;
 }
