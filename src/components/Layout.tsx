@@ -1,7 +1,9 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useState } from 'react';
 import { NavLink, useNavigate, Link } from 'react-router-dom';
-import { Leaf, Users, Tag, BarChart2, User, LogOut, Bell, LayoutGrid, Clock, UserCircle, Truck, HelpCircle, BookOpen, Package } from 'lucide-react';
+import { Leaf, Users, Tag, BarChart2, User, LogOut, Bell, LayoutGrid, Clock, UserCircle, Truck, HelpCircle, BookOpen, Package} from 'lucide-react';
 import { useAuth, TipoUsuario } from '../contexts/AuthContext';
+import { useNotifications } from '../contexts/NotificationContext';
+import NotificationModal from './NotificationModal';
 
 interface LayoutProps {
   children: ReactNode;
@@ -16,6 +18,8 @@ interface NavItem {
 
 const Layout: React.FC<LayoutProps> = ({ children, title }) => {
   const { usuario, logout } = useAuth();
+  const { totalNotifications } = useNotifications();
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const getNavItems = (): NavItem[] => {
@@ -36,7 +40,6 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
           { nome: 'Produtos', icone: <Package size={20} />, path: '/estoquista/produtos' },
           { nome: 'Categorias', icone: <LayoutGrid size={20} />, path: '/estoquista/categorias' },
           { nome: 'Fornecedores', icone: <Truck size={20} />, path: '/estoquista/fornecedores' },
-          // { nome: 'Perdas', icone: <Archive size={20} />, path: '/estoquista/perdas' }, // Adicione quando criar a tela
         ];
       case 'entregador':
         return [
@@ -63,80 +66,94 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
   }
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      <aside className="w-64 bg-white shadow-md flex flex-col">
-        <div className="flex items-center justify-center h-16 border-b">
-          <Leaf className="h-8 w-8 text-green-600" />
-          <span className="ml-2 text-xl font-semibold text-gray-800">HortiFruti</span>
-        </div>
+    <>
+      <div className="flex h-screen bg-gray-100">
+        <aside className="w-64 bg-white shadow-md flex flex-col">
+          <div className="flex items-center justify-center h-16 border-b">
+            <Leaf className="h-8 w-8 text-green-600" />
+            <span className="ml-2 text-xl font-semibold text-gray-800">HortiFruti</span>
+          </div>
 
-        <nav className="flex-1 mt-6 overflow-y-auto">
-          <ul>
-            {getNavItems().map((item) => (
-              <li key={item.nome} className="px-2 py-1">
-                <NavLink
-                  to={item.path}
-                  className={({ isActive }) =>
-                    `w-full flex items-center px-4 py-2 rounded-md transition-colors duration-200 ${isActive
-                      ? 'bg-green-100 text-green-700 font-semibold'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
-                    }`
-                  }
+          <nav className="flex-1 mt-6 overflow-y-auto">
+            <ul>
+              {getNavItems().map((item) => (
+                <li key={item.nome} className="px-2 py-1">
+                  <NavLink
+                    to={item.path}
+                    className={({ isActive }) =>
+                      `w-full flex items-center px-4 py-2 rounded-md transition-colors duration-200 ${isActive
+                        ? 'bg-green-100 text-green-700 font-semibold'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
+                      }`
+                    }
+                  >
+                    {item.icone}
+                    <span className="ml-3">{item.nome}</span>
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          <div className="px-2 py-1 mt-auto mb-4 border-t pt-2">
+            <Link
+              to="/perfil"
+              className="w-full flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 hover:text-gray-800 rounded-md mb-1"
+            >
+              <UserCircle size={20} />
+              <span className="ml-3">Meu Perfil</span>
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center px-4 py-2 text-gray-600 hover:bg-red-50 hover:text-red-600 rounded-md"
+            >
+              <LogOut size={20} />
+              <span className="ml-3">Sair</span>
+            </button>
+          </div>
+        </aside>
+
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <header className="bg-white shadow-sm">
+            <div className="flex items-center justify-between px-6 py-4">
+              <h1 className="text-2xl font-semibold text-gray-800">{title}</h1>
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="relative p-2 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 rounded-full"
                 >
-                  {item.icone}
-                  <span className="ml-3">{item.nome}</span>
-                </NavLink>
-              </li>
-            ))}
-          </ul>
-        </nav>
+                  <Bell className="w-6 h-6" />
+                  {totalNotifications > 0 && (
+                    <span className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold">
+                      {totalNotifications}
+                    </span>
+                  )}
+                </button>
 
-        <div className="px-2 py-1 mt-auto mb-4 border-t pt-2">
-          <Link
-            to="/perfil"
-            className="w-full flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 hover:text-gray-800 rounded-md mb-1"
-          >
-            <UserCircle size={20} />
-            <span className="ml-3">Meu Perfil</span>
-          </Link>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center px-4 py-2 text-gray-600 hover:bg-red-50 hover:text-red-600 rounded-md"
-          >
-            <LogOut size={20} />
-            <span className="ml-3">Sair</span>
-          </button>
-        </div>
-      </aside>
-
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white shadow-sm">
-          <div className="flex items-center justify-between px-6 py-4">
-            <h1 className="text-2xl font-semibold text-gray-800">{title}</h1>
-            <div className="flex items-center space-x-4">
-              <button className="relative p-2 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 rounded-full">
-                <Bell className="w-6 h-6" />
-                <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-500 ring-1 ring-white"></span>
-              </button>
-
-              <div className='flex items-center'>
-                <Link to="/perfil" className="mr-2 font-medium text-gray-700 hover:text-green-600">
-                  {usuario?.nomeCompleto || 'Usuário'}
-                </Link>
-                {usuario?.permissao && (
-                  <span className="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 rounded-full capitalize select-none">
-                    {getRoleLabel(usuario.permissao)}
-                  </span>
-                )}
+                <div className='flex items-center'>
+                  <Link to="/perfil" className="mr-2 font-medium text-gray-700 hover:text-green-600">
+                    {usuario?.nomeCompleto || 'Usuário'}
+                  </Link>
+                  {usuario?.permissao && (
+                    <span className="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 rounded-full capitalize select-none">
+                      {getRoleLabel(usuario.permissao)}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        </header>
-        <main className="flex-1 overflow-y-auto p-6">
-          {children}
-        </main>
+          </header>
+          <main className="flex-1 overflow-y-auto p-6">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+
+      <NotificationModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
+    </>
   );
 };
 

@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 
 import { AuthProvider } from './contexts/AuthContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import ApiErrorBoundary from './components/ApiErrorBoundary';
 import { ToastContainer } from './components/Toast';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -27,84 +28,82 @@ function App() {
   return (
     <ApiErrorBoundary>
       <AuthProvider>
-        <Router>
-          <ToastContainer />
-          <div className="min-h-screen bg-gray-100">
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route
-                path="/dashboard"
-                element={<ProtectedRoute><Dashboard /></ProtectedRoute>}
-              />
-              <Route
-                path="/perfil"
-                element={<ProtectedRoute><UserProfile /></ProtectedRoute>}
-              />
+        <NotificationProvider>
+          <Router>
+            <ToastContainer />
+            <div className="min-h-screen bg-gray-100">
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route
+                  path="/dashboard"
+                  element={<ProtectedRoute><Dashboard /></ProtectedRoute>}
+                />
+                <Route
+                  path="/perfil"
+                  element={<ProtectedRoute><UserProfile /></ProtectedRoute>}
+                />
 
-              {/* --- ROTAS DO GERENTE --- */}
-              <Route
-                path="/gerente"
-                element={<ProtectedRoute permissaoRequerida="gerente"><ManagerDashboard /></ProtectedRoute>}
-              />
-              <Route
-                path="/gerente/usuarios"
-                element={<ProtectedRoute permissaoRequerida="gerente"><UserManagement /></ProtectedRoute>}
-              />
-              <Route
-                path="/gerente/promocoes"
-                element={<ProtectedRoute permissaoRequerida="gerente"><PromotionManagement /></ProtectedRoute>}
-              />
-              <Route
-                path="/gerente/clientes"
-                element={<ProtectedRoute permissaoRequerida="gerente"><CustomerList /></ProtectedRoute>}
-              />
-              <Route
-                path="/gerente/faq"
-                element={<ProtectedRoute permissaoRequerida="gerente"><FaqManagement /></ProtectedRoute>}
-              />
-              <Route
-                path="/gerente/duvidas"
-                element={<ProtectedRoute permissaoRequerida="gerente"><DuvidasManagement /></ProtectedRoute>}
-              />
+                <Route
+                  path="/gerente"
+                  element={<ProtectedRoute permissaoRequerida="gerente"><ManagerDashboard /></ProtectedRoute>}
+                />
+                <Route
+                  path="/gerente/usuarios"
+                  element={<ProtectedRoute permissaoRequerida="gerente"><UserManagement /></ProtectedRoute>}
+                />
+                <Route
+                  path="/gerente/promocoes"
+                  element={<ProtectedRoute permissaoRequerida="gerente"><PromotionManagement /></ProtectedRoute>}
+                />
+                <Route
+                  path="/gerente/clientes"
+                  element={<ProtectedRoute permissaoRequerida="gerente"><CustomerList /></ProtectedRoute>}
+                />
+                <Route
+                  path="/gerente/faq"
+                  element={<ProtectedRoute permissaoRequerida="gerente"><FaqManagement /></ProtectedRoute>}
+                />
+                <Route
+                  path="/gerente/duvidas"
+                  element={<ProtectedRoute permissaoRequerida="gerente"><DuvidasManagement /></ProtectedRoute>}
+                />
 
-              {/* --- ROTAS DO ESTOQUISTA --- */}
-              <Route
-                path="/estoquista"
-                element={<Navigate to="/estoquista/produtos" replace />}
-              />
-              <Route
-                path="/estoquista/produtos"
-                element={<ProtectedRoute permissaoRequerida="estoquista"><ProductManagement /></ProtectedRoute>}
-              />
-              <Route
-                path="/estoquista/categorias"
-                element={<ProtectedRoute permissaoRequerida="estoquista"><CategoryManagement /></ProtectedRoute>}
-              />
-              <Route
-                path="/estoquista/fornecedores"
-                element={<ProtectedRoute permissaoRequerida="estoquista"><FornecedorManagement /></ProtectedRoute>}
-              />
+                <Route
+                  path="/estoquista"
+                  element={<Navigate to="/estoquista/produtos" replace />}
+                />
+                <Route
+                  path="/estoquista/produtos"
+                  element={<ProtectedRoute permissaoRequerida="estoquista"><ProductManagement /></ProtectedRoute>}
+                />
+                <Route
+                  path="/estoquista/categorias"
+                  element={<ProtectedRoute permissaoRequerida="estoquista"><CategoryManagement /></ProtectedRoute>}
+                />
+                <Route
+                  path="/estoquista/fornecedores"
+                  element={<ProtectedRoute permissaoRequerida="estoquista"><FornecedorManagement /></ProtectedRoute>}
+                />
 
-              {/* --- ROTAS DO ENTREGADOR --- */}
-              <Route
-                path="/entregador"
-                element={<ProtectedRoute permissaoRequerida="entregador"><DelivererDashboard /></ProtectedRoute>}
-              />
-              <Route
-                path="/entregador/entrega/:id"
-                element={<ProtectedRoute permissaoRequerida="entregador"><OrderDetails /></ProtectedRoute>}
-              />
-              <Route
-                path="/entregador/historico"
-                element={<ProtectedRoute permissaoRequerida="entregador"><DeliveryHistory /></ProtectedRoute>}
-              />
+                <Route
+                  path="/entregador"
+                  element={<ProtectedRoute permissaoRequerida="entregador"><DelivererDashboard /></ProtectedRoute>}
+                />
+                <Route
+                  path="/entregador/entrega/:id"
+                  element={<ProtectedRoute permissaoRequerida="entregador"><OrderDetails /></ProtectedRoute>}
+                />
+                <Route
+                  path="/entregador/historico"
+                  element={<ProtectedRoute permissaoRequerida="entregador"><DeliveryHistory /></ProtectedRoute>}
+                />
 
-              {/* Rota Padrão */}
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
-            </Routes>
-          </div>
-        </Router>
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              </Routes>
+            </div>
+          </Router>
+        </NotificationProvider>
       </AuthProvider>
     </ApiErrorBoundary>
   );

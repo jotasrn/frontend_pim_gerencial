@@ -1,12 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Layout from '../../components/Layout';
-import { Plus, Edit, Trash2, Package, AlertCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, Package, AlertCircle, AlertTriangle } from 'lucide-react';
 import ProductForm from '../../components/forms/ProdutoForm';
 import ConfirmationModal from '../../components/ConfirmacaoModal';
 import { useProdutos } from '../../hooks/useProdutos';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { formatCurrency, formatDate } from '../../utils/apiHelpers';
 import { Produto } from '../../types';
+
+const isExpired = (dateString?: string): boolean => {
+  if (!dateString) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const expiryDate = new Date(dateString);
+  return expiryDate <= today;
+};
 
 const ProductManagement: React.FC = () => {
   const {
@@ -81,17 +89,17 @@ const ProductManagement: React.FC = () => {
   }
 
   const handleCloseConfirmModal = () => {
-     setIsConfirmModalOpen(false);
-     setProductToDeactivate(null);
-     setIsDeactivatingLoading(false);
+    setIsConfirmModalOpen(false);
+    setProductToDeactivate(null);
+    setIsDeactivatingLoading(false);
   }
 
   useEffect(() => {
     const checkReload = () => {
-        if (!isFormOpen && shouldReloadList.current) {
-            carregarProdutos();
-            shouldReloadList.current = false;
-        }
+      if (!isFormOpen && shouldReloadList.current) {
+        carregarProdutos();
+        shouldReloadList.current = false;
+      }
     };
     const timerId = setTimeout(checkReload, 0);
     return () => clearTimeout(timerId);
@@ -104,20 +112,21 @@ const ProductManagement: React.FC = () => {
     }
 
     const { quantidadeAtual, quantidadeMinima } = produto.estoque;
-    const min = quantidadeMinima ?? 0; 
+    const min = quantidadeMinima ?? 0;
 
-    if (quantidadeAtual <= min) {
+    if (quantidadeAtual <= 5) {
       return (
-        <span className="flex items-center text-red-600 font-semibold" title={`Estoque baixo! Mínimo: ${min}`}>
+        <span className="flex items-center text-red-600 font-semibold" title={`Estoque crítico! Mínimo: ${min}`}>
           <AlertCircle className="w-4 h-4 mr-1.5" />
           {quantidadeAtual}
         </span>
       );
     }
-    
-     if (quantidadeAtual <= min * 1.5) { 
+
+    if (quantidadeAtual <= min) {
       return (
-        <span className="flex items-center text-yellow-600 font-medium" title={`Estoque em atenção. Mínimo: ${min}`}>
+        <span className="flex items-center text-yellow-600 font-medium" title={`Estoque baixo. Mínimo: ${min}`}>
+          <AlertTriangle className="w-4 h-4 mr-1.5" />
           {quantidadeAtual}
         </span>
       );
@@ -158,47 +167,61 @@ const ProductManagement: React.FC = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {listaProdutos.length === 0 && !loadingList ? (
-                 <tr><td colSpan={8} className="text-center py-6 text-gray-500">Nenhum produto cadastrado.</td></tr>
+                <tr><td colSpan={8} className="text-center py-6 text-gray-500">Nenhum produto cadastrado.</td></tr>
               ) : (
-                listaProdutos.map((product) => (
-                  <tr key={product.id} className={`hover:bg-gray-50 transition-colors ${!product.ativo ? 'opacity-60 bg-gray-50' : ''}`}>
-                     <td className="px-6 py-4 whitespace-nowrap">
-                       <div className="flex-shrink-0 h-10 w-10">
-                         {product.imagemUrl ? (
+                listaProdutos.map((product) => {
+                  const expired = isExpired(product.dataValidade);
+                  const lowStock = product.estoque ? product.estoque.quantidadeAtual <= 5 : false;
+                  const isActuallyActive = product.ativo && !lowStock;
+                  const canReactivate = !lowStock;
+
+                  return (
+                    <tr key={product.id} className={`hover:bg-gray-50 transition-colors ${!isActuallyActive ? 'opacity-60 bg-gray-50' : ''}`}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex-shrink-0 h-10 w-10">
+                          {product.imagemUrl ? (
                             <img className="h-10 w-10 rounded-full object-cover" src={product.imagemUrl} alt={product.nome} />
                           ) : (
-                            <div className={`h-10 w-10 rounded-full ${!product.ativo ? 'bg-gray-300' : 'bg-gray-200'} flex items-center justify-center text-gray-400`}>
+                            <div className={`h-10 w-10 rounded-full ${!isActuallyActive ? 'bg-gray-300' : 'bg-gray-200'} flex items-center justify-center text-gray-400`}>
                               <Package size={20} />
                             </div>
                           )}
-                       </div>
-                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{product.nome}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">{product.categoria?.nome ?? 'N/A'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 font-semibold">{formatCurrency(product.precoVenda)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{product.nome}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">{product.categoria?.nome ?? 'N/A'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 font-semibold">{formatCurrency(product.precoVenda)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
                         {renderEstoque(product)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden lg:table-cell">{product.dataValidade ? formatDate(product.dataValidade) : '-'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        product.ativo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {product.ativo ? 'Ativo' : 'Inativo'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end space-x-3">
-                        <button onClick={() => handleOpenEditForm(product)} className="text-indigo-600 hover:text-indigo-900 transition-colors" title="Editar produto">
-                          <Edit className="h-5 w-5" />
-                        </button>
-                        <button onClick={() => handleOpenDeactivateModal(product)} className="text-red-600 hover:text-red-900 transition-colors" title={product.ativo ? "Desativar produto" : "Reativar produto"}>
-                          <Trash2 className="h-5 w-5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden lg:table-cell ${expired ? 'text-red-600 font-semibold' : ''}`}>
+                        {expired && <AlertCircle className="w-4 h-4 inline mr-1.5" />}
+                        {product.dataValidade ? formatDate(product.dataValidade) : '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <span className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${isActuallyActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                          {isActuallyActive ? 'Ativo' : 'Inativo'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center justify-end space-x-3">
+                          <button onClick={() => handleOpenEditForm(product)} className="text-indigo-600 hover:text-indigo-900 transition-colors" title="Editar produto">
+                            <Edit className="h-5 w-5" />
+                          </button>
+                          <button
+                            onClick={() => handleOpenDeactivateModal(product)}
+                            className={`transition-colors ${(!isActuallyActive && !canReactivate) ? 'text-gray-400 cursor-not-allowed' : 'text-red-600 hover:text-red-900'}`}
+                            title={isActuallyActive ? "Desativar produto" : (!canReactivate ? "Aumente o estoque para reativar" : "Reativar produto")}
+                            disabled={!isActuallyActive && !canReactivate}
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })
               )}
             </tbody>
           </table>

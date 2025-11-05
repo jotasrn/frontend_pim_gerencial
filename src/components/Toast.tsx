@@ -23,7 +23,6 @@ const customToast = (message: string, icon: React.ReactNode, backgroundColor: st
   );
 };
 
-// Configuração personalizada dos toasts
 export const showToast = {
   success: (message: string) => {
     toast.success(message, {

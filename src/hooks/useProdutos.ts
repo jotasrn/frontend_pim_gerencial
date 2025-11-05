@@ -2,6 +2,15 @@ import { useState, useEffect, useCallback } from 'react';
 import { produtoService } from '../services/produtoService';
 import { showToast } from '../components/Toast';
 import { Produto, FiltrosProdutos } from '../types';
+import { useNotifications } from '../contexts/NotificationContext';
+
+const isExpired = (dateString?: string): boolean => {
+  if (!dateString) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const expiryDate = new Date(dateString);
+  return expiryDate <= today;
+};
 
 interface UseProdutosReturn {
   produtos: Produto[];
@@ -20,13 +29,50 @@ export const useProdutos = (filtrosIniciais: FiltrosProdutos = {}): UseProdutosR
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [filtros, setFiltros] = useState<FiltrosProdutos>(filtrosIniciais);
+  const { setNotificationData } = useNotifications();
 
   const carregarProdutos = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const dados = await produtoService.listar(filtros);
+
+      const expired: Produto[] = [];
+      const lowStock: Produto[] = [];
+      const deactivationPromises: Promise<void>[] = [];
+      let lowStockAlertShown = false;
+
+      dados.forEach(p => {
+        const isLowStock = p.estoque && p.estoque.quantidadeAtual <= 5;
+
+        if (p.ativo && isLowStock) {
+          deactivationPromises.push(produtoService.desativar(p.id));
+          p.ativo = false;
+          if (!lowStockAlertShown) {
+            showToast.warning(`Produto "${p.nome}" foi desativado (estoque baixo).`);
+            lowStockAlertShown = true;
+          }
+        }
+
+        if (isExpired(p.dataValidade) && p.ativo) {
+          expired.push(p);
+        }
+
+        if (isLowStock) {
+          lowStock.push(p);
+        }
+      });
+
+      if (deactivationPromises.length > 0) {
+        await Promise.all(deactivationPromises);
+      }
+
       setProdutos(dados);
+      setNotificationData({
+        expiredProducts: expired,
+        lowStockProducts: lowStock
+      });
+
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao carregar produtos.';
       setError(errorMessage);
@@ -34,7 +80,7 @@ export const useProdutos = (filtrosIniciais: FiltrosProdutos = {}): UseProdutosR
     } finally {
       setLoading(false);
     }
-  }, [filtros]);
+  }, [filtros, setNotificationData]);
 
   const criarProduto = async (formData: FormData): Promise<boolean> => {
     setError(null);
