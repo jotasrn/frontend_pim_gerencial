@@ -20,6 +20,9 @@ const ChangePasswordModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
         e.preventDefault();
         const newErrors: Partial<typeof formData> = {};
 
+        if (!formData.senhaAtual) {
+            newErrors.senhaAtual = 'A senha atual é obrigatória.';
+        }
         if (formData.novaSenha.length < 6) {
             newErrors.novaSenha = 'A nova senha deve ter no mínimo 6 caracteres.';
         }
@@ -32,12 +35,12 @@ const ChangePasswordModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
         }
 
         setIsLoading(true);
+        setErrors({});
         setTimeout(() => {
             setIsLoading(false);
             showToast.success('Senha alterada com sucesso! (Simulação)');
             onClose();
             setFormData({ senhaAtual: '', novaSenha: '', confirmarSenha: '' });
-            setErrors({});
         }, 1500);
     };
 
@@ -45,28 +48,29 @@ const ChangePasswordModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-                <div className="flex items-center justify-between p-4 border-b">
-                    <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                        <Lock className="w-5 h-5 text-gray-500 mr-2" />
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md">
+                <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                        <Lock className="w-5 h-5 text-gray-500 dark:text-gray-400 mr-2" />
                         Alterar Senha
                     </h3>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 focus:outline-none" disabled={isLoading}>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none" disabled={isLoading}>
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
                     <div>
-                        <label htmlFor="senhaAtual" className="block text-sm font-medium text-gray-700 mb-1">Senha Atual</label>
+                        <label htmlFor="senhaAtual" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Senha Atual</label>
                         <input
                             id="senhaAtual" type="password" value={formData.senhaAtual}
                             onChange={(e) => setFormData(p => ({ ...p, senhaAtual: e.target.value }))}
-                            className="input" disabled={isLoading}
+                            className={`input ${errors.senhaAtual ? 'input-error' : ''}`} disabled={isLoading}
                         />
+                        {errors.senhaAtual && <p className="text-red-500 text-xs mt-1">{errors.senhaAtual}</p>}
                     </div>
                     <div>
-                        <label htmlFor="novaSenha" className="block text-sm font-medium text-gray-700 mb-1">Nova Senha</label>
+                        <label htmlFor="novaSenha" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nova Senha</label>
                         <input
                             id="novaSenha" type="password" value={formData.novaSenha}
                             onChange={(e) => setFormData(p => ({ ...p, novaSenha: e.target.value }))}
@@ -75,7 +79,7 @@ const ChangePasswordModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
                         {errors.novaSenha && <p className="text-red-500 text-xs mt-1">{errors.novaSenha}</p>}
                     </div>
                     <div>
-                        <label htmlFor="confirmarSenha" className="block text-sm font-medium text-gray-700 mb-1">Confirmar Nova Senha</label>
+                        <label htmlFor="confirmarSenha" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirmar Nova Senha</label>
                         <input
                             id="confirmarSenha" type="password" value={formData.confirmarSenha}
                             onChange={(e) => setFormData(p => ({ ...p, confirmarSenha: e.target.value }))}
@@ -84,8 +88,8 @@ const ChangePasswordModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
                         {errors.confirmarSenha && <p className="text-red-500 text-xs mt-1">{errors.confirmarSenha}</p>}
                     </div>
 
-                    <div className="flex justify-end space-x-3 pt-4 border-t">
-                        <button type="button" onClick={onClose} className="btn btn-outline border-gray-300" disabled={isLoading}>
+                    <div className="flex justify-end space-x-3 pt-4 border-t dark:border-gray-700">
+                        <button type="button" onClick={onClose} className="btn btn-outline border-gray-300 dark:border-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700" disabled={isLoading}>
                             Cancelar
                         </button>
                         <button type="submit" className="btn bg-green-600 text-white hover:bg-green-700 flex items-center gap-2" disabled={isLoading}>

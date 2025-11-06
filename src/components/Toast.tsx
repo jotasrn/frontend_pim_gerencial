@@ -2,7 +2,6 @@ import React from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import { CheckCircle, XCircle, AlertCircle, Info } from 'lucide-react';
 
-// Função auxiliar para criar um toast customizado
 const customToast = (message: string, icon: React.ReactNode, backgroundColor: string) => {
   toast.custom(
     (t) => (
@@ -61,7 +60,6 @@ export const showToast = {
   },
 };
 
-// Componente Toaster para ser usado no App
 export const ToastContainer: React.FC = () => {
   return <Toaster position="top-right" reverseOrder={false} gutter={8} />;
 };

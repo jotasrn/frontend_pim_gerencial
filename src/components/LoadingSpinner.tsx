@@ -1,17 +1,14 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
 
-// Define os tamanhos permitidos como um tipo
 type SpinnerSize = 'sm' | 'md' | 'lg' | 'xl';
 
-// Define a interface para as props do componente
 interface LoadingSpinnerProps {
   size?: SpinnerSize;
   text?: string;
 }
 
 const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ size = 'md', text = 'Carregando...' }) => {
-  // O tipo Record garante que as chaves de sizeClasses sejam do tipo SpinnerSize
   const sizeClasses: Record<SpinnerSize, string> = {
     sm: 'w-4 h-4',
     md: 'w-6 h-6',
