@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Layout from '../../components/Layout';
 import { Plus, Edit, Trash2, Package, AlertCircle, AlertTriangle } from 'lucide-react';
 import ProductForm from '../../components/forms/ProdutoForm';
-import ConfirmationModal from '../../components/ConfirmacaoModal';
+import ConfirmationModal from '../../components/modals/ConfirmacaoModal';
 import { useProdutos } from '../../hooks/useProdutos';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { formatCurrency, formatDate } from '../../utils/apiHelpers';

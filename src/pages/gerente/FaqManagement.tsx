@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Layout from '../../components/Layout';
 import { Plus, Edit, Trash2, BookOpen } from 'lucide-react';
 import FaqForm from '../../components/forms/FaqForm';
-import ConfirmationModal from '../../components/ConfirmacaoModal';
+import ConfirmationModal from '../../components/modals/ConfirmacaoModal';
 import { useFaq } from '../../hooks/useFaq';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { Faq } from '../../types';

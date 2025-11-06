@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Layout from '../../components/Layout';
 import { Plus, Edit, Trash2, User as UserIcon } from 'lucide-react';
 import UserForm from '../../components/forms/UserForm';
-import ConfirmationModal from '../../components/ConfirmacaoModal';
+import ConfirmationModal from '../../components/modals/ConfirmacaoModal';
 import { useUsuarios } from '../../hooks/useUsuarios';
 import { Usuario, UsuarioData } from '../../types';
 import LoadingSpinner from '../../components/LoadingSpinner';

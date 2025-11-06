@@ -1,8 +1,8 @@
 import React from 'react';
-import { useNotifications } from '../contexts/NotificationContext';
+import { useNotifications } from '../../contexts/NotificationContext';
 import { X, Bell, AlertCircle, Archive } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { formatDate } from '../utils/apiHelpers';
+import { formatDate } from '../../utils/apiHelpers';
 
 interface ModalProps {
     isOpen: boolean;

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Layout from '../../components/Layout';
 import { Plus, Edit, Trash2, Truck } from 'lucide-react';
 import FornecedorForm from '../../components/forms/FornecedorForm';
-import ConfirmationModal from '../../components/ConfirmacaoModal';
+import ConfirmationModal from '../../components/modals/ConfirmacaoModal';
 import { useFornecedores } from '../../hooks/useFornecedores';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { Fornecedor } from '../../types';

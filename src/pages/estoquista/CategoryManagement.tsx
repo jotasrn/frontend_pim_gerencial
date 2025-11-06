@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Layout from '../../components/Layout';
 import { Plus, Edit, Trash2, Tag } from 'lucide-react';
 import CategoryForm from '../../components/forms/CategoryForm';
-import ConfirmationModal from '../../components/ConfirmacaoModal';
+import ConfirmationModal from '../../components/modals/ConfirmacaoModal';
 import { useCategorias } from '../../hooks/useCategorias';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { Categoria } from '../../types';

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Layout from '../../components/Layout';
 import { Plus, Edit, Trash2, Tag } from 'lucide-react';
 import PromotionForm from '../../components/forms/PromotionForm';
-import ConfirmationModal from '../../components/ConfirmacaoModal';
+import ConfirmationModal from '../../components/modals/ConfirmacaoModal';
 import { usePromocoes } from '../../hooks/usePromocoes';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { Promocao } from '../../types';

@@ -3,7 +3,7 @@ import { NavLink, useNavigate, Link } from 'react-router-dom';
 import { Leaf, Users, Tag, BarChart2, User, LogOut, Bell, LayoutGrid, Clock, UserCircle, Truck, HelpCircle, BookOpen, Package} from 'lucide-react';
 import { useAuth, TipoUsuario } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
-import NotificationModal from './NotificationModal';
+import NotificationModal from "./modals/NotificacaoModal";
 
 interface LayoutProps {
   children: ReactNode;
