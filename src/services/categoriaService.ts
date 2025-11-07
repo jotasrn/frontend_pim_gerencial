@@ -29,7 +29,7 @@ export const categoriaService = {
 
   criar: async (categoria: CategoriaData): Promise<Categoria> => {
     try {
-      const response = await api.post<Categoria>('/categorias', categoria); // URL corrigida
+      const response = await api.post<Categoria>('/categorias', categoria);
       return response.data;
     } catch (error: unknown) {
       console.error('Erro ao criar categoria:', error);
@@ -61,23 +61,23 @@ export const categoriaService = {
     }
   },
 
-  remover: async (id: number): Promise<void> => {
+  desativar: async (id: number): Promise<void> => {
     try {
-      await api.delete(`/categorias/${id}`);
+      await api.put(`/categorias/${id}/desativar`);
     } catch (error: unknown) {
-      console.error(`Erro ao remover categoria ${id}:`, error);
-      let errorMessage = 'Não foi possível remover a categoria.';
+      console.error(`Erro ao desativar categoria ${id}:`, error);
+      let errorMessage = 'Não foi possível desativar a categoria.';
       if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError<ApiErrorResponse>;
-      if (axiosError.response?.status === 409) {
-            errorMessage = axiosError.response?.data?.message || errorMessage;
+        if (axiosError.response?.status === 409) {
+          errorMessage = axiosError.response?.data?.message || errorMessage;
         } else {
-            errorMessage = axiosError.message || errorMessage;
+          errorMessage = axiosError.message || errorMessage;
         }
       } else if (error instanceof Error) {
         errorMessage = error.message || errorMessage;
-      }if (errorMessage.toLowerCase().includes('associada a produtos')) {
-          throw new Error('Não é possível excluir: Categoria está associada a produtos.');
+      } if (errorMessage.toLowerCase().includes('associada a produtos')) {
+        throw new Error('Não é possível excluir: Categoria está associada a produtos.');
       }
       throw new Error(errorMessage);
     }

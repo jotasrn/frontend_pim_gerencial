@@ -66,8 +66,7 @@ export const useCategorias = (): UseCategoriasReturn => {
   const removerCategoria = async (id: number): Promise<boolean> => {
     setError(null);
     try {
-      await categoriaService.remover(id);
-      // await carregarCategorias(); // Deixa o componente pai recarregar se necessário
+      await categoriaService.desativar(id);
       showToast.success('Categoria removida com sucesso!');
       return true;
     } catch (err: unknown) {

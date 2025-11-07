@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { produtoService } from '../services/produtoService';
 import { showToast } from '../components/Toast';
 import { Produto, FiltrosProdutos } from '../types';
-import { useNotifications } from '../contexts/NotificationContext';
+import { useNotifications } from '../contexts/NotificacaoContext';
 
 const isExpired = (dateString?: string): boolean => {
   if (!dateString) return false;

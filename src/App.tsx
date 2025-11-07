@@ -1,8 +1,8 @@
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 
 import { AuthProvider } from './contexts/AuthContext';
-import { NotificationProvider } from './contexts/NotificationContext';
-import { ThemeProvider } from './contexts/ThemeContext';
+import { NotificationProvider } from './contexts/NotificacaoContext';
+import { ThemeProvider } from './contexts/TemaContext';
 import ApiErrorBoundary from './components/ApiErrorBoundary';
 import { ToastContainer } from './components/Toast';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -15,15 +15,15 @@ import UserManagement from './pages/gerente/UsuariosManagement';
 import ProductManagement from './pages/estoquista/ProdutoManagement';
 import PromotionManagement from './pages/gerente/PromocaoManagement';
 import CustomerList from './pages/gerente/CustomerList';
-import CategoryManagement from './pages/estoquista/CategoryManagement';
+import CategoryManagement from './pages/estoquista/CategoriaManagement';
 import UserProfile from './pages/Perfil';
 import FornecedorManagement from './pages/estoquista/FornecedorManagement';
 import FaqManagement from './pages/gerente/FaqManagement';
 import DuvidasManagement from './pages/gerente/DuvidasManagement';
-import DelivererDashboard from './pages/Entregador/EntregadorDashboard';
-import OrderDetails from './pages/Entregador/OrderDetails';
-import DeliveryHistory from './pages/Entregador/EntregadorHistorico';
-
+import DelivererDashboard from './pages/entregador/EntregadorDashboard';
+import OrderDetails from './pages/entregador/OrderDetails';
+import DeliveryHistory from './pages/entregador/EntregadorHistorico';
+import EstoquistaDashboard from './pages/estoquista/EstoquistaDashboard';
 
 function App() {
   return (
@@ -73,7 +73,7 @@ function App() {
 
                   <Route
                     path="/estoquista"
-                    element={<Navigate to="/estoquista/produtos" replace />}
+                    element={<ProtectedRoute permissaoRequerida="estoquista"><EstoquistaDashboard /></ProtectedRoute>}
                   />
                   <Route
                     path="/estoquista/produtos"

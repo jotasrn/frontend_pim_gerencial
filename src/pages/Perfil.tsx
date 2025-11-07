@@ -1,7 +1,7 @@
 import React, { useState, useEffect, FormEvent, useCallback } from 'react';
 import Layout from '../components/Layout';
 import { useAuth } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme } from '../contexts/TemaContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { UserCircle, Mail, ShieldCheck, Car, ClipboardIcon, Save, X, Edit, AlertCircle, Moon, Sun } from 'lucide-react';
 import { entregadorService, EntregadorPerfilUpdateDTO } from '../services/entregadorService';

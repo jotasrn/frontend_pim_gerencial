@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, ReactNode, useMemo } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useMemo, useCallback } from 'react';
 import { Produto } from '../types';
 
 interface NotificationData {
@@ -19,9 +19,9 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         lowStockProducts: [],
     });
 
-    const setNotificationData = (newData: Partial<NotificationData>) => {
+    const setNotificationData = useCallback((newData: Partial<NotificationData>) => {
         setData(prev => ({ ...prev, ...newData }));
-    };
+    }, []);
 
     const totalNotifications = useMemo(() => {
         return data.expiredProducts.length + data.lowStockProducts.length;
