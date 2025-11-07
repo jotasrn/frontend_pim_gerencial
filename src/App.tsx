@@ -20,9 +20,9 @@ import UserProfile from './pages/Perfil';
 import FornecedorManagement from './pages/estoquista/FornecedorManagement';
 import FaqManagement from './pages/gerente/FaqManagement';
 import DuvidasManagement from './pages/gerente/DuvidasManagement';
-import DelivererDashboard from './pages/entregador/EntregadorDashboard';
-import OrderDetails from './pages/entregador/OrderDetails';
-import DeliveryHistory from './pages/entregador/EntregadorHistorico';
+import DelivererDashboard from './pages/Entregador/EntregadorDashboard';
+import OrderDetails from './pages/Entregador/OrderDetails';
+import DeliveryHistory from './pages/Entregador/EntregadorHistorico';
 import EstoquistaDashboard from './pages/estoquista/EstoquistaDashboard';
 
 function App() {
