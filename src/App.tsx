@@ -25,7 +25,7 @@ import FornecedorManagement from './pages/estoquista/FornecedorManagement';
 import PerdaManagement from './pages/estoquista/PerdaManagement';
 
 import UserProfile from './pages/Perfil';
-import DelivererDashboard from './pages/entregador/EntregadorDashboard';
+import Entregador from './pages/entregador/EntregadorDashboard';
 import OrderDetails from './pages/entregador/OrderDetails';
 import DeliveryHistory from './pages/entregador/EntregadorHistorico';
 
@@ -99,7 +99,7 @@ function App() {
 
                                     <Route
                                         path="/entregador"
-                                        element={<ProtectedRoute permissaoRequerida="entregador"><DelivererDashboard /></ProtectedRoute>}
+                                        element={<ProtectedRoute permissaoRequerida="entregador"><Entregador /></ProtectedRoute>}
                                     />
                                     <Route
                                         path="/entregador/entrega/:id"

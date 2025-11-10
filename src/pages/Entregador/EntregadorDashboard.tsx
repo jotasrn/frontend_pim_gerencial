@@ -6,7 +6,7 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import { Link } from 'react-router-dom';
 import { formatDateTime } from '../../utils/apiHelpers';
 
-const DelivererDashboard: React.FC = () => {
+const Entregador: React.FC = () => {
   const { entregas, loading, error } = useMinhasEntregas();
 
   const stats = useMemo(() => {
@@ -105,4 +105,4 @@ const DelivererDashboard: React.FC = () => {
   );
 };
 
-export default DelivererDashboard;
+export default Entregador;
