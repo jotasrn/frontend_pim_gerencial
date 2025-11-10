@@ -6,7 +6,7 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import { Link } from 'react-router-dom';
 import { formatDateTime } from '../../utils/apiHelpers';
 
-const DeliveryHistory: React.FC = () => {
+const HistoricoEntregador: React.FC = () => {
     const { historico, loading, error } = useMeuHistorico();
 
     const getStatusStyle = (status: string) => {
@@ -91,4 +91,4 @@ const DeliveryHistory: React.FC = () => {
     );
 };
 
-export default DeliveryHistory;
+export default HistoricoEntregador;

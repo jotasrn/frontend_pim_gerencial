@@ -27,7 +27,7 @@ import PerdaManagement from './pages/estoquista/PerdaManagement';
 import Entregador from './pages/estoquista/EstoquistaDashboard';
 import UserProfile from './pages/Perfil';
 import DetalhesEntrega from './pages/entregador/DetalhesEntrega';
-import DeliveryHistory from './pages/entregador/EntregadorHistorico';
+import HistoricoEntregador from './pages/entregador/EntregadorHistorico';
 
 function App() {
     return (
@@ -107,7 +107,7 @@ function App() {
                                     />
                                     <Route
                                         path="/entregador/historico"
-                                        element={<ProtectedRoute permissaoRequerida="entregador"><DeliveryHistory /></ProtectedRoute>}
+                                        element={<ProtectedRoute permissaoRequerida="entregador"><HistoricoEntregador /></ProtectedRoute>}
                                     />
 
                                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
