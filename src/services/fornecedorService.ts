@@ -1,5 +1,5 @@
 import api from './api';
-import { Fornecedor, FiltrosFornecedores } from '../types';
+import { Fornecedor } from '../types';
 import axios, { AxiosError } from 'axios';
 
 type FornecedorData = Omit<Fornecedor, 'id'>;
@@ -20,10 +20,9 @@ const handleError = (error: unknown, defaultMessage: string): string => {
 };
 
 export const fornecedorService = {
-  listar: async (filtros: FiltrosFornecedores = {}): Promise<Fornecedor[]> => {
+  listar: async (): Promise<Fornecedor[]> => {
     try {
-      const params = new URLSearchParams(filtros as Record<string, string>).toString();
-      const response = await api.get<Fornecedor[]>(`/fornecedores${params ? `?${params}` : ''}`);
+      const response = await api.get<Fornecedor[]>('/fornecedores');
       return response.data;
     } catch (error) {
       throw new Error(handleError(error, 'Não foi possível carregar os fornecedores.'));
@@ -57,11 +56,11 @@ export const fornecedorService = {
     }
   },
 
-  remover: async (id: number): Promise<void> => {
+  desativar: async (id: number): Promise<void> => {
     try {
-      await api.delete(`/fornecedores/${id}`);
+      await api.put(`/fornecedores/${id}/desativar`);
     } catch (error) {
-      throw new Error(handleError(error, 'Não foi possível remover o fornecedor.'));
+      throw new Error(handleError(error, 'Não foi possível desativar o fornecedor.'));
     }
   }
 };

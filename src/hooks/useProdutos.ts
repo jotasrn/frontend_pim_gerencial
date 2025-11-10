@@ -17,6 +17,8 @@ interface UseProdutosReturn {
   loading: boolean;
   error: string | null;
   filtros: FiltrosProdutos;
+  expiredProducts: Produto[];
+  lowStockProducts: Produto[];
   carregarProdutos: () => void;
   criarProduto: (formData: FormData) => Promise<boolean>;
   atualizarProduto: (id: number, formData: FormData) => Promise<boolean>;
@@ -26,9 +28,12 @@ interface UseProdutosReturn {
 
 export const useProdutos = (filtrosIniciais: FiltrosProdutos = {}): UseProdutosReturn => {
   const [produtos, setProdutos] = useState<Produto[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filtros, setFiltros] = useState<FiltrosProdutos>(filtrosIniciais);
+  const [expiredProducts, setExpiredProducts] = useState<Produto[]>([]);
+  const [lowStockProducts, setLowStockProducts] = useState<Produto[]>([]);
+
   const { setNotificationData } = useNotifications();
 
   const carregarProdutos = useCallback(async () => {
@@ -44,7 +49,6 @@ export const useProdutos = (filtrosIniciais: FiltrosProdutos = {}): UseProdutosR
 
       dados.forEach(p => {
         const isLowStock = p.estoque && p.estoque.quantidadeAtual <= 5;
-
         if (p.ativo && isLowStock) {
           deactivationPromises.push(produtoService.desativar(p.id));
           p.ativo = false;
@@ -53,26 +57,16 @@ export const useProdutos = (filtrosIniciais: FiltrosProdutos = {}): UseProdutosR
             lowStockAlertShown = true;
           }
         }
-
-        if (isExpired(p.dataValidade) && p.ativo) {
-          expired.push(p);
-        }
-
-        if (isLowStock) {
-          lowStock.push(p);
-        }
+        if (isExpired(p.dataValidade) && p.ativo) expired.push(p);
+        if (isLowStock) lowStock.push(p);
       });
 
-      if (deactivationPromises.length > 0) {
-        await Promise.all(deactivationPromises);
-      }
+      if (deactivationPromises.length > 0) await Promise.all(deactivationPromises);
 
       setProdutos(dados);
-      setNotificationData({
-        expiredProducts: expired,
-        lowStockProducts: lowStock
-      });
-
+      setExpiredProducts(expired);
+      setLowStockProducts(lowStock);
+      setNotificationData({ expiredProducts: expired, lowStockProducts: lowStock });
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao carregar produtos.';
       setError(errorMessage);
@@ -80,10 +74,9 @@ export const useProdutos = (filtrosIniciais: FiltrosProdutos = {}): UseProdutosR
     } finally {
       setLoading(false);
     }
-  }, [filtros, setNotificationData]);
+  }, [JSON.stringify(filtros), setNotificationData]);
 
   const criarProduto = async (formData: FormData): Promise<boolean> => {
-    setError(null);
     try {
       await produtoService.criar(formData);
       showToast.success('Produto criado com sucesso!');
@@ -97,7 +90,6 @@ export const useProdutos = (filtrosIniciais: FiltrosProdutos = {}): UseProdutosR
   };
 
   const atualizarProduto = async (id: number, formData: FormData): Promise<boolean> => {
-    setError(null);
     try {
       await produtoService.atualizar(id, formData);
       showToast.success('Produto atualizado com sucesso!');
@@ -111,7 +103,6 @@ export const useProdutos = (filtrosIniciais: FiltrosProdutos = {}): UseProdutosR
   };
 
   const desativarProduto = async (id: number): Promise<boolean> => {
-    setError(null);
     try {
       await produtoService.desativar(id);
       showToast.success('Status do produto alterado com sucesso!');
@@ -137,6 +128,8 @@ export const useProdutos = (filtrosIniciais: FiltrosProdutos = {}): UseProdutosR
     loading,
     error,
     filtros,
+    expiredProducts,
+    lowStockProducts,
     carregarProdutos,
     criarProduto,
     atualizarProduto,

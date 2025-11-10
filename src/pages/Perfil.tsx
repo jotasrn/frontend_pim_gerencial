@@ -173,7 +173,7 @@ const UserProfile: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center min-h-[30px]">
               <Mail className="w-5 h-5 text-gray-500 dark:text-gray-400 mr-3 mb-1 sm:mb-0" />
               <span className="text-sm font-medium text-gray-600 dark:text-gray-300 sm:w-28">Email:</span>
-              <span className="text-sm text-gray-500 dark:text-gray-400">{usuario.email} (não pode ser alterado)</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">{usuario.email}</span>
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center min-h-[30px]">
               <ShieldCheck className="w-5 h-5 text-gray-500 dark:text-gray-400 mr-3 mb-1 sm:mb-0" />

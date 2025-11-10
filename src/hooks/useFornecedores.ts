@@ -50,7 +50,7 @@ export const useFornecedores = (): UseFornecedoresReturn => {
   };
 
   const atualizarFornecedor = async (id: number, data: FornecedorData): Promise<boolean> => {
-     setError(null);
+    setError(null);
     try {
       await fornecedorService.atualizar(id, data);
       showToast.success('Fornecedor atualizado com sucesso!');
@@ -66,13 +66,13 @@ export const useFornecedores = (): UseFornecedoresReturn => {
   const removerFornecedor = async (id: number): Promise<boolean> => {
     setError(null);
     try {
-      await fornecedorService.remover(id);
-      showToast.success('Fornecedor removido com sucesso!');
+      await fornecedorService.desativar(id);
+      showToast.success('Fornecedor desativado com sucesso!');
       return true;
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
       setError(errorMessage);
-      showToast.error(`Erro ao remover fornecedor: ${errorMessage}`);
+      showToast.error(`Erro ao desativar fornecedor: ${errorMessage}`);
       return false;
     }
   };

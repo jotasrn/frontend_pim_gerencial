@@ -1,6 +1,6 @@
 import React, { ReactNode, useState } from 'react';
 import { NavLink, useNavigate, Link } from 'react-router-dom';
-import { Leaf, Users, Tag, BarChart2, User, LogOut, Bell, LayoutGrid, Clock, UserCircle, Truck, HelpCircle, BookOpen, Package, Menu, X } from 'lucide-react';
+import { Leaf, Users, Tag, BarChart2, User, LogOut, Bell, LayoutGrid, Clock, UserCircle, Truck, HelpCircle, BookOpen, Package, Menu, X, Archive} from 'lucide-react';
 import { useAuth, TipoUsuario } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificacaoContext';
 import NotificationModal from './modals/NotificacaoModal';
@@ -14,7 +14,7 @@ interface NavItem {
   nome: string;
   icone: ReactNode;
   path: string;
-  end?: boolean; // <-- MUDANÇA 1: Adicionada propriedade opcional
+  end?: boolean;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, title }) => {
@@ -30,7 +30,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
     switch (usuario.permissao) {
       case 'gerente':
         return [
-          { nome: 'Dashboard', icone: <BarChart2 size={20} />, path: '/gerente', end: true }, // <-- MUDANÇA 2: Adicionado 'end: true'
+          { nome: 'Dashboard', icone: <BarChart2 size={20} />, path: '/gerente', end: true },
           { nome: 'Usuários', icone: <Users size={20} />, path: '/gerente/usuarios' },
           { nome: 'Promoções', icone: <Tag size={20} />, path: '/gerente/promocoes' },
           { nome: 'Clientes', icone: <User size={20} />, path: '/gerente/clientes' },
@@ -39,19 +39,20 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
         ];
       case 'estoquista':
         return [
-          { nome: 'Dashboard', icone: <BarChart2 size={20} />, path: '/estoquista', end: true }, // <-- MUDANÇA 2: Adicionado 'end: true'
+          { nome: 'Dashboard', icone: <BarChart2 size={20} />, path: '/estoquista', end: true }, 
           { nome: 'Produtos', icone: <Package size={20} />, path: '/estoquista/produtos' },
           { nome: 'Categorias', icone: <LayoutGrid size={20} />, path: '/estoquista/categorias' },
           { nome: 'Fornecedores', icone: <Truck size={20} />, path: '/estoquista/fornecedores' },
+          { nome: 'Perdas', icone: <Archive size={20} />, path: '/estoquista/perdas' },
         ];
       case 'entregador':
         return [
-          { nome: 'Minhas Entregas', icone: <Truck size={20} />, path: '/entregador', end: true }, // <-- MUDANÇA 2: Adicionado 'end: true'
+          { nome: 'Minhas Entregas', icone: <Truck size={20} />, path: '/entregador', end: true },
           { nome: 'Histórico', icone: <Clock size={20} />, path: '/entregador/historico' },
         ];
       default:
         return [
-          { nome: 'Dashboard', icone: <BarChart2 size={20} />, path: '/dashboard', end: true }, // <-- MUDANÇA 2: Adicionado 'end: true'
+          { nome: 'Dashboard', icone: <BarChart2 size={20} />, path: '/dashboard', end: true }, 
         ];
     }
   };
