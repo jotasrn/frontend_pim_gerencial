@@ -7,7 +7,7 @@ import { formatCurrency, formatDateTime } from '../../utils/apiHelpers';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { EntregaStatusUpdate } from '../../types';
 
-const OrderDetails: React.FC = () => {
+const DetalhesEntrega: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { entrega, loading, error, atualizarStatusEntrega, carregarDetalhes } = useEntregaDetalhes(Number(id));
@@ -295,4 +295,4 @@ const OrderDetails: React.FC = () => {
   );
 };
 
-export default OrderDetails;
+export default DetalhesEntrega;
