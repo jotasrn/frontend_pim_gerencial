@@ -13,19 +13,21 @@ import Dashboard from './pages/Dashboard';
 
 import ManagerDashboard from './pages/gerente/GerenteDashboard';
 import UserManagement from './pages/gerente/UsuariosManagement';
-import ProductManagement from './pages/estoquista/ProdutoManagement';
 import PromotionManagement from './pages/gerente/PromocaoManagement';
 import CustomerList from './pages/gerente/CustomerList';
-import CategoryManagement from './pages/estoquista/CategoriaManagement';
-import PerdaManagement from './pages/estoquista/PerdaManagement';
-import UserProfile from './pages/Perfil';
-import FornecedorManagement from './pages/estoquista/FornecedorManagement';
 import FaqManagement from './pages/gerente/FaqManagement';
 import DuvidasManagement from './pages/gerente/DuvidasManagement';
+
+import EstoquistaDashboard from './pages/estoquista/EstoquistaDashboard';
+import ProductManagement from './pages/estoquista/ProdutoManagement';
+import CategoryManagement from './pages/estoquista/CategoriaManagement';
+import FornecedorManagement from './pages/estoquista/FornecedorManagement';
+import PerdaManagement from './pages/estoquista/PerdaManagement';
+
+import UserProfile from './pages/Perfil';
 import DelivererDashboard from './pages/entregador/EntregadorDashboard';
 import OrderDetails from './pages/entregador/OrderDetails';
 import DeliveryHistory from './pages/entregador/EntregadorHistorico';
-import EstoquistaDashboard from './pages/estoquista/EstoquistaDashboard';
 
 function App() {
     return (
@@ -94,6 +96,7 @@ function App() {
                                         path="/estoquista/perdas"
                                         element={<ProtectedRoute permissaoRequerida="estoquista"><PerdaManagement /></ProtectedRoute>}
                                     />
+
                                     <Route
                                         path="/entregador"
                                         element={<ProtectedRoute permissaoRequerida="entregador"><DelivererDashboard /></ProtectedRoute>}
