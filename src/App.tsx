@@ -24,7 +24,7 @@ import CategoryManagement from './pages/estoquista/CategoriaManagement';
 import FornecedorManagement from './pages/estoquista/FornecedorManagement';
 import PerdaManagement from './pages/estoquista/PerdaManagement';
 
-import Entregador from './pages/estoquista/EstoquistaDashboard';
+import Entregador from './pages/entregador/EntregadorDashboard';
 import UserProfile from './pages/Perfil';
 import DetalhesEntrega from './pages/entregador/DetalhesEntrega';
 import HistoricoEntregador from './pages/entregador/EntregadorHistorico';
