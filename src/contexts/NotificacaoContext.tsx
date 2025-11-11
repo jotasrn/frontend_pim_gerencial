@@ -1,19 +1,10 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode, useCallback, useMemo } from 'react';
-import { Produto } from '../types';
-import { produtoService } from '../services/produtoService';
+import { NotificationDTO } from '../types';
+import { relatorioService } from '../services/relatorioService';
 import { useAuth } from './AuthContext';
 
-const isExpired = (dateString?: string): boolean => {
-    if (!dateString) return false;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const expiryDate = new Date(dateString);
-    return expiryDate <= today;
-};
-
 interface NotificationContextType {
-    expiredProducts: Produto[];
-    lowStockProducts: Produto[];
+    notifications: NotificationDTO[];
     totalNotifications: number;
     refetchNotifications: () => void;
     loading: boolean;
@@ -22,8 +13,7 @@ interface NotificationContextType {
 const NotificacaoContext = createContext<NotificationContextType | undefined>(undefined);
 
 export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [expiredProducts, setExpiredProducts] = useState<Produto[]>([]);
-    const [lowStockProducts, setLowStockProducts] = useState<Produto[]>([]);
+    const [notifications, setNotifications] = useState<NotificationDTO[]>([]);
     const [loading, setLoading] = useState(true);
     const { usuario, carregando: authCarregando } = useAuth();
 
@@ -40,35 +30,16 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         if (usuario && hasAdminRole) {
             setLoading(true);
             try {
-                const dados = await produtoService.listar({ status: 'all' });
-
-                const expired: Produto[] = [];
-                const lowStock: Produto[] = [];
-
-                dados.forEach(p => {
-                    const isLowStock = p.estoque && p.estoque.quantidadeAtual <= (p.estoque.quantidadeMinima ?? 10);
-                    const hasExpired = isExpired(p.dataValidade);
-
-                    if (hasExpired && p.ativo) {
-                        expired.push(p);
-                    }
-
-                    if (isLowStock && p.ativo && !hasExpired) {
-                        lowStock.push(p);
-                    }
-                });
-
-                setExpiredProducts(expired);
-                setLowStockProducts(lowStock);
-
+                const dados = await relatorioService.getNotificacoes();
+                setNotifications(dados);
             } catch (error) {
                 console.error("Erro ao buscar notificações:", error);
+                setNotifications([]);
             } finally {
                 setLoading(false);
             }
         } else {
-            setExpiredProducts([]);
-            setLowStockProducts([]);
+            setNotifications([]);
             setLoading(false);
         }
     }, [usuario, hasAdminRole, authCarregando]);
@@ -78,13 +49,12 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     }, [fetchNotifications]);
 
     const totalNotifications = useMemo(() => {
-        return expiredProducts.length + lowStockProducts.length;
-    }, [expiredProducts, lowStockProducts]);
+        return notifications.length;
+    }, [notifications]);
 
     return (
         <NotificacaoContext.Provider value={{
-            expiredProducts,
-            lowStockProducts,
+            notifications,
             totalNotifications,
             refetchNotifications: fetchNotifications,
             loading

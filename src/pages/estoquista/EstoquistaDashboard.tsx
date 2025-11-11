@@ -5,17 +5,27 @@ import { useProdutos } from '../../hooks/useProdutos';
 import { useCategorias } from '../../hooks/useCategorias';
 import { useFornecedores } from '../../hooks/useFornecedores';
 import { useNotifications } from '../../contexts/NotificacaoContext';
-import { Package, AlertCircle, AlertTriangle, Truck, LayoutGrid, CheckSquare, XSquare } from 'lucide-react';
+import { Package, AlertCircle, AlertTriangle, Truck, LayoutGrid, CheckSquare, XSquare, TrendingDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { formatDate } from '../../utils/apiHelpers';
+import { NotificationDTO } from '../../types';
 
 const EstoquistaDashboard: React.FC = () => {
     const { produtos, loading: loadingProdutos } = useProdutos({ status: 'all' });
     const { categorias, loading: loadingCategorias } = useCategorias();
     const { fornecedores, loading: loadingFornecedores } = useFornecedores();
-    const { lowStockProducts, expiredProducts, loading: loadingNotifications } = useNotifications();
+    const { notifications, loading: loadingNotifications } = useNotifications();
 
     const isLoading = loadingProdutos || loadingCategorias || loadingFornecedores || loadingNotifications;
+
+    const lowStockProducts = useMemo(() =>
+        notifications.filter(n => n.tipo === 'ESTOQUE_BAIXO'),
+        [notifications]
+    );
+
+    const expiredProducts = useMemo(() =>
+        notifications.filter(n => n.tipo === 'PRODUTO_VENCIDO'),
+        [notifications]
+    );
 
     const stats = useMemo(() => {
         const totalProdutos = produtos.length;
@@ -24,6 +34,7 @@ const EstoquistaDashboard: React.FC = () => {
 
         const totalEstoqueBaixo = lowStockProducts.length;
         const totalVencidos = expiredProducts.length;
+        const totalPerdasAltas = notifications.filter(n => n.tipo === 'PERDA_ALTA').length;
 
         const totalCategorias = categorias.filter(c => c.ativo).length;
         const totalFornecedores = fornecedores.filter(f => f.ativo).length;
@@ -36,8 +47,9 @@ const EstoquistaDashboard: React.FC = () => {
             { id: 5, name: 'Produtos Inativos', value: produtosInativos, icon: XSquare, color: 'text-gray-500' },
             { id: 6, name: 'Fornecedores Ativos', value: totalFornecedores, icon: Truck, color: 'text-cyan-500' },
             { id: 7, name: 'Categorias Ativas', value: totalCategorias, icon: LayoutGrid, color: 'text-purple-500' },
+            { id: 8, name: 'Alertas de Perdas', value: totalPerdasAltas, icon: TrendingDown, color: 'text-red-700', alert: totalPerdasAltas > 0 },
         ];
-    }, [produtos, categorias, fornecedores, lowStockProducts, expiredProducts]);
+    }, [produtos, categorias, fornecedores, lowStockProducts, expiredProducts, notifications]);
 
     if (isLoading) {
         return (
@@ -78,15 +90,15 @@ const EstoquistaDashboard: React.FC = () => {
                         {lowStockProducts.length === 0 ? (
                             <p className="text-center text-gray-500 dark:text-gray-400 p-6">Nenhum produto com estoque baixo.</p>
                         ) : (
-                            lowStockProducts.map(produto => (
+                            lowStockProducts.map((notificacao: NotificationDTO) => (
                                 <Link
-                                    key={produto.id}
-                                    to="/estoquista/produtos"
+                                    key={notificacao.id}
+                                    to={notificacao.link || '/estoquista/produtos'}
                                     className="p-4 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                                 >
-                                    <span className="font-medium text-gray-800 dark:text-gray-200">{produto.nome}</span>
+                                    <span className="font-medium text-gray-800 dark:text-gray-200">{notificacao.titulo}</span>
                                     <span className="text-sm font-bold text-yellow-600 dark:text-yellow-400">
-                                        Restam: {produto.estoque?.quantidadeAtual ?? 0}
+                                        {notificacao.mensagem}
                                     </span>
                                 </Link>
                             ))
@@ -103,15 +115,15 @@ const EstoquistaDashboard: React.FC = () => {
                         {expiredProducts.length === 0 ? (
                             <p className="text-center text-gray-500 dark:text-gray-400 p-6">Nenhum produto vencido.</p>
                         ) : (
-                            expiredProducts.map(produto => (
+                            expiredProducts.map((notificacao: NotificationDTO) => (
                                 <Link
-                                    key={produto.id}
-                                    to="/estoquista/produtos"
+                                    key={notificacao.id}
+                                    to={notificacao.link || '/estoquista/produtos'}
                                     className="p-4 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                                 >
-                                    <span className="font-medium text-gray-800 dark:text-gray-200">{produto.nome}</span>
+                                    <span className="font-medium text-gray-800 dark:text-gray-200">{notificacao.titulo}</span>
                                     <span className="text-sm font-bold text-red-600 dark:text-red-400">
-                                        Vencido em: {produto.dataValidade ? formatDate(produto.dataValidade) : 'N/A'}
+                                        {notificacao.mensagem}
                                     </span>
                                 </Link>
                             ))

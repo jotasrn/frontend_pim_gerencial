@@ -20,12 +20,12 @@ export type UsuarioData = {
   ativo: boolean;
 };
 
-export interface Cliente{
+export interface Cliente {
   id: number;
-  nomeCompleto: string; 
-  email: string; 
-  cpf: string;   
-  telefone: string; 
+  nomeCompleto: string;
+  email: string;
+  cpf: string;
+  telefone: string;
   ativo: boolean;
 }
 
@@ -70,7 +70,7 @@ export interface Produto {
     quantidadeAtual: number;
     quantidadeMinima?: number;
   };
-  fornecedores?: Fornecedor[]; 
+  fornecedores?: Fornecedor[];
 }
 
 
@@ -79,7 +79,7 @@ export type ProdutoData = Omit<Produto, 'id' | 'precoVenda' | 'categoria' | 'pro
     id: number;
   };
   quantidadeMinima?: number;
-  quantidadeAtual?: number; 
+  quantidadeAtual?: number;
   fornecedorIds?: number[];
 };
 
@@ -246,7 +246,7 @@ export interface Duvida {
   titulo: string;
   pergunta: string;
   publico: boolean;
-  status: string; 
+  status: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -273,4 +273,12 @@ export interface EntregaStatusUpdate {
   status: string;
   nomeRecebedor?: string;
   documentoRecebedor?: string;
+}
+
+export interface NotificationDTO {
+  id: string;
+  tipo: string; 
+  titulo: string;
+  mensagem: string;
+  link: string; 
 }

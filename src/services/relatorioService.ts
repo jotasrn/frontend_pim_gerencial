@@ -7,9 +7,38 @@ import {
   EstoqueCriticoData,
   Venda,
   FiltrosRelatorios,
+  NotificationDTO, // Adicionado
 } from '../types';
+import axios, { AxiosError } from 'axios'; // Adicionado
+
+// Adicionado: Interface para Erros da API
+interface ApiErrorResponse {
+  message?: string;
+  error?: string;
+}
+
+// Adicionado: Função para tratar erros
+const handleError = (error: unknown, defaultMessage: string): string => {
+  if (axios.isAxiosError(error)) {
+    const axiosError = error as AxiosError<ApiErrorResponse>;
+    return axiosError.response?.data?.message || axiosError.message || defaultMessage;
+  } else if (error instanceof Error) {
+    return error.message || defaultMessage;
+  }
+  return defaultMessage;
+};
 
 export const relatorioService = {
+  // Adicionado: Função para buscar notificações
+  getNotificacoes: async (): Promise<NotificationDTO[]> => {
+    try {
+      const response = await api.get<NotificationDTO[]>('/relatorios/notificacoes');
+      return response.data;
+    } catch (error) {
+      throw new Error(handleError(error, 'Não foi possível carregar as notificações.'));
+    }
+  },
+
   gerarRelatorioVendasPorCategoria: async (): Promise<VendasCategoriaData[]> => {
     try {
       const response = await api.get<VendasCategoriaData[]>('/relatorios/vendas-por-categoria');
@@ -63,30 +92,20 @@ export const relatorioService = {
     }
   },
 
-  /**
-   * Busca vendas realizadas dentro de um período, com limite opcional.
-   * Usado para a tabela de vendas recentes no dashboard.
-   * @param filtros Objeto contendo dataInicio?, dataFim?, limite?
-   * @returns Promise<Venda[]>
-   */
   gerarRelatorioVendas: async (filtros: FiltrosRelatorios & { limite?: number } = {}): Promise<Venda[]> => {
     try {
-      // Define datas padrão (últimos 7 dias) se não forem fornecidas
       const endDate = new Date();
       const startDate = new Date();
       startDate.setDate(endDate.getDate() - 7);
 
-      // Prepara os filtros finais, garantindo formato YYYY-MM-DD para datas
       const finalFilters = {
         dataInicio: filtros.dataInicio || startDate.toISOString().split('T')[0],
         dataFim: filtros.dataFim || endDate.toISOString().split('T')[0],
-        ...(filtros.limite && { limite: filtros.limite.toString() }), // Adiciona limite apenas se existir
+        ...(filtros.limite && { limite: filtros.limite.toString() }),
       };
 
-      // Constrói a query string apenas com parâmetros definidos
       const params = new URLSearchParams(finalFilters as Record<string, string>).toString();
 
-      // Chama o endpoint /relatorios/vendas que aceita dataInicio, dataFim e limite
       const response = await api.get<Venda[]>(`/relatorios/vendas${params ? `?${params}` : ''}`);
       return response.data;
     } catch (error) {
