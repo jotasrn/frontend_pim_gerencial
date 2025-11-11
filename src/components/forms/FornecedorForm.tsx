@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, User, Briefcase, Mail, Phone } from 'lucide-react';
+import { X, User, Briefcase, Mail, Phone, RefreshCw } from 'lucide-react';
 import { showToast } from '../Toast';
 import { Fornecedor } from '../../types';
 
@@ -25,11 +25,13 @@ const FornecedorForm: React.FC<FornecedorFormProps> = ({
     cnpj: '',
     email: '',
     telefone: '',
+    ativo: true,
   }), []);
 
   const [formData, setFormData] = useState(initialFormState);
-  const [errors, setErrors] = useState<Partial<typeof initialFormState>>({});
+  const [errors, setErrors] = useState<Partial<Pick<FornecedorData, 'nome'>>>({});
   const [loading, setLoading] = useState(false);
+  const [isInactive, setIsInactive] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -39,9 +41,12 @@ const FornecedorForm: React.FC<FornecedorFormProps> = ({
           cnpj: initialData.cnpj || '',
           email: initialData.email || '',
           telefone: initialData.telefone || '',
+          ativo: initialData.ativo ?? true,
         });
+        setIsInactive(!initialData.ativo);
       } else {
         setFormData(initialFormState);
+        setIsInactive(false);
       }
       setErrors({});
     }
@@ -49,17 +54,17 @@ const FornecedorForm: React.FC<FornecedorFormProps> = ({
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) {
+    if (errors[field as keyof typeof errors]) {
       setErrors(prev => {
         const newErrors = { ...prev };
-        delete newErrors[field];
+        delete newErrors[field as keyof typeof errors];
         return newErrors;
       });
     }
   };
 
   const validateForm = () => {
-    const newErrors: Partial<typeof formData> = {};
+    const newErrors: Partial<Pick<FornecedorData, 'nome'>> = {};
     if (!formData.nome.trim()) newErrors.nome = 'Nome é obrigatório';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -74,7 +79,14 @@ const FornecedorForm: React.FC<FornecedorFormProps> = ({
 
     setLoading(true);
     try {
-      await onSubmit(formData);
+      const dataParaEnviar: FornecedorData = {
+        nome: formData.nome,
+        cnpj: formData.cnpj,
+        email: formData.email,
+        telefone: formData.telefone,
+        ativo: true,
+      };
+      await onSubmit(dataParaEnviar);
     } catch (error) {
       console.error("Erro no handleSubmit do FornecedorForm:", error);
     } finally {
@@ -152,7 +164,8 @@ const FornecedorForm: React.FC<FornecedorFormProps> = ({
             </button>
             <button
               type="submit" disabled={loading}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none disabled:opacity-50"
+              className={`inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white ${isInactive ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-600 hover:bg-green-700'
+                } focus:outline-none disabled:opacity-50`}
             >
               {loading && (
                 <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
@@ -160,15 +173,24 @@ const FornecedorForm: React.FC<FornecedorFormProps> = ({
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
               )}
-              {loading ? 'Salvando...' : (isEditing ? 'Atualizar' : 'Criar')}
+              {loading ? 'Salvando...' : (
+                isInactive ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Reativar e Salvar
+                  </>
+                ) : (
+                  isEditing ? 'Atualizar' : 'Criar'
+                )
+              )}
             </button>
           </div>
         </form>
       </div>
       <style>{`
-    .input { @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-100; }
-    .input-error { @apply border-red-500 focus:ring-red-500; }
-   `}</style>
+  .input { @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-100; }
+  .input-error { @apply border-red-500 focus:ring-red-500; }
+ `}</style>
     </div>
   );
 };

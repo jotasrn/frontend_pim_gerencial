@@ -18,6 +18,9 @@ export const produtoService = {
       if (filtros.ativo !== undefined) {
         params.append('ativo', String(filtros.ativo));
       }
+      if (filtros.status) {
+        params.append('status', filtros.status);
+      }
       const queryString = params.toString();
       const endpoint = '/produtos';
       const response = await api.get<Produto[]>(`${endpoint}${queryString ? `?${queryString}` : ''}`);
@@ -25,6 +28,24 @@ export const produtoService = {
     } catch (error: unknown) {
       console.error('Erro ao listar produtos:', error);
       let errorMessage = 'Não foi possível carregar os produtos.';
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<ApiErrorResponse>;
+        errorMessage = axiosError.response?.data?.message || axiosError.message || errorMessage;
+      } else if (error instanceof Error) {
+        errorMessage = error.message || errorMessage;
+      }
+      throw new Error(errorMessage);
+    }
+  },
+
+  // Adicione o método buscarPorId que usamos no formulário
+  buscarPorId: async (id: number): Promise<Produto> => {
+    try {
+      const response = await api.get<Produto>(`/produtos/${id}`);
+      return response.data;
+    } catch (error: unknown) {
+      console.error(`Erro ao buscar produto ${id}:`, error);
+      let errorMessage = 'Não foi possível carregar o produto.';
       if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError<ApiErrorResponse>;
         errorMessage = axiosError.response?.data?.message || axiosError.message || errorMessage;
@@ -77,7 +98,7 @@ export const produtoService = {
     }
   },
 
-  desativar: async (id: number): Promise<void> => { 
+  desativar: async (id: number): Promise<void> => {
     try {
       await api.put(`/produtos/${id}/desativar`);
     } catch (error: unknown) {

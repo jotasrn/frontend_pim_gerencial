@@ -1,47 +1,101 @@
-import React, { createContext, useState, useContext, ReactNode, useMemo, useCallback } from 'react';
+import React, { createContext, useState, useContext, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import { Produto } from '../types';
+import { produtoService } from '../services/produtoService';
+import { useAuth } from './AuthContext';
 
-interface NotificationData {
+const isExpired = (dateString?: string): boolean => {
+    if (!dateString) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const expiryDate = new Date(dateString);
+    return expiryDate <= today;
+};
+
+interface NotificationContextType {
     expiredProducts: Produto[];
     lowStockProducts: Produto[];
-}
-
-interface NotificationContextType extends NotificationData {
     totalNotifications: number;
-    setNotificationData: (data: Partial<NotificationData>) => void;
+    refetchNotifications: () => void;
+    loading: boolean;
 }
 
-const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
+const NotificacaoContext = createContext<NotificationContextType | undefined>(undefined);
 
 export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [data, setData] = useState<NotificationData>({
-        expiredProducts: [],
-        lowStockProducts: [],
-    });
+    const [expiredProducts, setExpiredProducts] = useState<Produto[]>([]);
+    const [lowStockProducts, setLowStockProducts] = useState<Produto[]>([]);
+    const [loading, setLoading] = useState(true);
+    const { usuario, carregando: authCarregando } = useAuth();
 
-    const setNotificationData = useCallback((newData: Partial<NotificationData>) => {
-        setData(prev => ({ ...prev, ...newData }));
-    }, []);
+    const hasAdminRole = useMemo(() => {
+        if (!usuario) return false;
+        return usuario.permissao === 'gerente' || usuario.permissao === 'estoquista';
+    }, [usuario]);
+
+    const fetchNotifications = useCallback(async () => {
+        if (authCarregando) {
+            return;
+        }
+
+        if (usuario && hasAdminRole) {
+            setLoading(true);
+            try {
+                const dados = await produtoService.listar({ status: 'all' });
+
+                const expired: Produto[] = [];
+                const lowStock: Produto[] = [];
+
+                dados.forEach(p => {
+                    const isLowStock = p.estoque && p.estoque.quantidadeAtual <= (p.estoque.quantidadeMinima ?? 10);
+                    const hasExpired = isExpired(p.dataValidade);
+
+                    if (hasExpired && p.ativo) {
+                        expired.push(p);
+                    }
+
+                    if (isLowStock && p.ativo && !hasExpired) {
+                        lowStock.push(p);
+                    }
+                });
+
+                setExpiredProducts(expired);
+                setLowStockProducts(lowStock);
+
+            } catch (error) {
+                console.error("Erro ao buscar notificações:", error);
+            } finally {
+                setLoading(false);
+            }
+        } else {
+            setExpiredProducts([]);
+            setLowStockProducts([]);
+            setLoading(false);
+        }
+    }, [usuario, hasAdminRole, authCarregando]);
+
+    useEffect(() => {
+        fetchNotifications();
+    }, [fetchNotifications]);
 
     const totalNotifications = useMemo(() => {
-        return data.expiredProducts.length + data.lowStockProducts.length;
-    }, [data]);
-
-    const value = {
-        ...data,
-        totalNotifications,
-        setNotificationData,
-    };
+        return expiredProducts.length + lowStockProducts.length;
+    }, [expiredProducts, lowStockProducts]);
 
     return (
-        <NotificationContext.Provider value={value}>
+        <NotificacaoContext.Provider value={{
+            expiredProducts,
+            lowStockProducts,
+            totalNotifications,
+            refetchNotifications: fetchNotifications,
+            loading
+        }}>
             {children}
-        </NotificationContext.Provider>
+        </NotificacaoContext.Provider>
     );
 };
 
 export const useNotifications = () => {
-    const context = useContext(NotificationContext);
+    const context = useContext(NotificacaoContext);
     if (context === undefined) {
         throw new Error('useNotifications deve ser usado dentro de um NotificationProvider');
     }

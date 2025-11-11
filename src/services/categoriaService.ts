@@ -12,7 +12,7 @@ interface ApiErrorResponse {
 export const categoriaService = {
   listar: async (): Promise<Categoria[]> => {
     try {
-      const response = await api.get<Categoria[]>('/categorias');
+      const response = await api.get<Categoria[]>('/categorias?status=all');
       return response.data;
     } catch (error: unknown) {
       console.error('Erro ao listar categorias:', error);

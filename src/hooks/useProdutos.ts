@@ -4,21 +4,11 @@ import { showToast } from '../components/Toast';
 import { Produto, FiltrosProdutos } from '../types';
 import { useNotifications } from '../contexts/NotificacaoContext';
 
-const isExpired = (dateString?: string): boolean => {
-  if (!dateString) return false;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const expiryDate = new Date(dateString);
-  return expiryDate <= today;
-};
-
 interface UseProdutosReturn {
   produtos: Produto[];
   loading: boolean;
   error: string | null;
   filtros: FiltrosProdutos;
-  expiredProducts: Produto[];
-  lowStockProducts: Produto[];
   carregarProdutos: () => void;
   criarProduto: (formData: FormData) => Promise<boolean>;
   atualizarProduto: (id: number, formData: FormData) => Promise<boolean>;
@@ -31,10 +21,9 @@ export const useProdutos = (filtrosIniciais: FiltrosProdutos = {}): UseProdutosR
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filtros, setFiltros] = useState<FiltrosProdutos>(filtrosIniciais);
-  const [expiredProducts, setExpiredProducts] = useState<Produto[]>([]);
-  const [lowStockProducts, setLowStockProducts] = useState<Produto[]>([]);
 
-  const { setNotificationData } = useNotifications();
+  const { refetchNotifications } = useNotifications();
+  const filtrosString = JSON.stringify(filtros);
 
   const carregarProdutos = useCallback(async () => {
     setLoading(true);
@@ -42,8 +31,6 @@ export const useProdutos = (filtrosIniciais: FiltrosProdutos = {}): UseProdutosR
     try {
       const dados = await produtoService.listar(filtros);
 
-      const expired: Produto[] = [];
-      const lowStock: Produto[] = [];
       const deactivationPromises: Promise<void>[] = [];
       let lowStockAlertShown = false;
 
@@ -57,16 +44,14 @@ export const useProdutos = (filtrosIniciais: FiltrosProdutos = {}): UseProdutosR
             lowStockAlertShown = true;
           }
         }
-        if (isExpired(p.dataValidade) && p.ativo) expired.push(p);
-        if (isLowStock) lowStock.push(p);
       });
 
-      if (deactivationPromises.length > 0) await Promise.all(deactivationPromises);
+      if (deactivationPromises.length > 0) {
+        await Promise.all(deactivationPromises);
+        refetchNotifications();
+      }
 
       setProdutos(dados);
-      setExpiredProducts(expired);
-      setLowStockProducts(lowStock);
-      setNotificationData({ expiredProducts: expired, lowStockProducts: lowStock });
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao carregar produtos.';
       setError(errorMessage);
@@ -74,12 +59,13 @@ export const useProdutos = (filtrosIniciais: FiltrosProdutos = {}): UseProdutosR
     } finally {
       setLoading(false);
     }
-  }, [JSON.stringify(filtros), setNotificationData]);
+  }, [filtrosString, refetchNotifications, filtros]);
 
   const criarProduto = async (formData: FormData): Promise<boolean> => {
     try {
       await produtoService.criar(formData);
       showToast.success('Produto criado com sucesso!');
+      refetchNotifications();
       return true;
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
@@ -93,6 +79,7 @@ export const useProdutos = (filtrosIniciais: FiltrosProdutos = {}): UseProdutosR
     try {
       await produtoService.atualizar(id, formData);
       showToast.success('Produto atualizado com sucesso!');
+      refetchNotifications();
       return true;
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
@@ -106,6 +93,7 @@ export const useProdutos = (filtrosIniciais: FiltrosProdutos = {}): UseProdutosR
     try {
       await produtoService.desativar(id);
       showToast.success('Status do produto alterado com sucesso!');
+      refetchNotifications();
       return true;
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
@@ -128,8 +116,6 @@ export const useProdutos = (filtrosIniciais: FiltrosProdutos = {}): UseProdutosR
     loading,
     error,
     filtros,
-    expiredProducts,
-    lowStockProducts,
     carregarProdutos,
     criarProduto,
     atualizarProduto,

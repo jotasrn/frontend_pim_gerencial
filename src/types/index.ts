@@ -47,6 +47,7 @@ export interface Categoria {
   id: number;
   nome: string;
   descricao?: string;
+  ativo: boolean;
 }
 
 export type CategoriaData = Omit<Categoria, 'id'>;
@@ -86,6 +87,7 @@ export interface FiltrosProdutos {
   nome?: string;
   categoriaId?: number | string;
   ativo?: boolean;
+  status?: string;
 }
 
 export interface Estoque {
@@ -141,6 +143,7 @@ export interface Fornecedor {
   cnpj?: string;
   email?: string;
   telefone?: string;
+  ativo: boolean;
 }
 
 export interface FiltrosFornecedores {

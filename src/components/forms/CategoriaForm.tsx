@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Tag } from 'lucide-react';
+import { X, Tag, RefreshCw } from 'lucide-react';
 import { showToast } from '../Toast';
 import { Categoria } from '../../types';
 
@@ -23,11 +23,13 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
     const initialFormState = useMemo(() => ({
         nome: '',
         descricao: '',
+        ativo: true,
     }), []);
 
     const [formData, setFormData] = useState(initialFormState);
-    const [errors, setErrors] = useState<Partial<typeof initialFormState>>({});
+    const [errors, setErrors] = useState<Partial<Pick<CategoriaData, 'nome'>>>({});
     const [loading, setLoading] = useState(false);
+    const [isInactive, setIsInactive] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
@@ -35,9 +37,12 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
                 setFormData({
                     nome: initialData.nome || '',
                     descricao: initialData.descricao || '',
+                    ativo: initialData.ativo ?? true,
                 });
+                setIsInactive(!initialData.ativo);
             } else {
                 setFormData(initialFormState);
+                setIsInactive(false);
             }
             setErrors({});
         }
@@ -45,17 +50,17 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
 
     const handleInputChange = (field: keyof typeof formData, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
-        if (errors[field]) {
+        if (errors[field as keyof typeof errors]) {
             setErrors(prev => {
                 const newErrors = { ...prev };
-                delete newErrors[field];
+                delete newErrors[field as keyof typeof errors];
                 return newErrors;
             });
         }
     };
 
     const validateForm = () => {
-        const newErrors: Partial<typeof formData> = {};
+        const newErrors: Partial<Pick<CategoriaData, 'nome'>> = {};
         if (!formData.nome.trim()) newErrors.nome = 'Nome é obrigatório';
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -72,6 +77,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
             const dataParaEnviar: CategoriaData = {
                 nome: formData.nome,
                 descricao: formData.descricao,
+                ativo: true,
             };
             await onSubmit(dataParaEnviar);
         } catch (error) {
@@ -140,7 +146,8 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
                         <button
                             type="submit"
                             disabled={loading}
-                            className="inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none disabled:opacity-50"
+                            className={`inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white ${isInactive ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-600 hover:bg-green-700'
+                                } focus:outline-none disabled:opacity-50`}
                         >
                             {loading ? (
                                 <>
@@ -149,16 +156,26 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
                                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                     </svg>
                                     Salvando...
-                                </>) : (isEditing ? 'Atualizar' : 'Criar')}
+                                </>
+                            ) : (
+                                isInactive ? (
+                                    <>
+                                        <RefreshCw className="w-4 h-4 mr-2" />
+                                        Reativar e Salvar
+                                    </>
+                                ) : (
+                                    isEditing ? 'Atualizar' : 'Criar'
+                                )
+                            )}
                         </button>
                     </div>
                 </form>
             </div>
             <style>{`
-       .input { @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-100; }
+   .input { @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-100; }
    .input-error { @apply border-red-500 focus:ring-red-500; }
-       .textarea { @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-100; }
-      `}</style>
+   .textarea { @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-100; }
+   `}</style>
         </div>
     );
 };

@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Layout from '../../components/Layout';
-import { Plus, Edit, Trash2, Truck, Mail, Phone, FileText } from 'lucide-react';
+import { Plus, Edit, Trash2, Truck, Mail, Phone, FileText, RefreshCw, Eye, EyeOff } from 'lucide-react';
 import FornecedorForm from '../../components/forms/FornecedorForm';
 import ConfirmationModal from '../../components/modals/ConfirmacaoModal';
 import FornecedorDetailsModal from '../../components/modals/FornecedorDetailsModal';
@@ -26,14 +26,20 @@ const FornecedorManagement: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingFornecedor, setEditingFornecedor] = useState<Fornecedor | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const [fornecedorToDelete, setFornecedorToDelete] = useState<Fornecedor | null>(null);
-  const [isDeletingLoading, setIsDeletingLoading] = useState(false);
+  const [fornecedorToConfirm, setFornecedorToConfirm] = useState<Fornecedor | null>(null);
+  const [isConfirmLoading, setIsConfirmLoading] = useState(false);
+  const [modalAction, setModalAction] = useState<'deactivate' | 'reactivate' | null>(null);
 
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedFornecedor, setSelectedFornecedor] = useState<Fornecedor | null>(null);
+  const [showInactive, setShowInactive] = useState(false);
 
   const shouldReloadList = useRef(false);
   const isLoading = loadingFornecedores || loadingProdutos;
+
+  const fornecedoresToDisplay = useMemo(() => {
+    return fornecedores.filter(f => f.ativo === !showInactive);
+  }, [fornecedores, showInactive]);
 
   const handleOpenCreateForm = () => {
     setEditingFornecedor(null);
@@ -71,21 +77,36 @@ const FornecedorManagement: React.FC = () => {
     return success;
   };
 
-  const handleOpenDeleteModal = (fornecedor: Fornecedor) => {
-    setFornecedorToDelete(fornecedor);
+  const handleOpenConfirmModal = (action: 'deactivate' | 'reactivate', fornecedor: Fornecedor) => {
+    setModalAction(action);
+    setFornecedorToConfirm(fornecedor);
     setIsConfirmModalOpen(true);
   };
 
-  const handleConfirmDelete = async () => {
-    if (!fornecedorToDelete) return;
+  const handleConfirmAction = async () => {
+    if (!fornecedorToConfirm || !modalAction) return;
 
-    setIsDeletingLoading(true);
-    const success = await removerFornecedor(fornecedorToDelete.id);
-    setIsDeletingLoading(false);
+    setIsConfirmLoading(true);
+    let success = false;
+
+    if (modalAction === 'deactivate') {
+      success = await removerFornecedor(fornecedorToConfirm.id);
+    } else {
+      const data: FornecedorData = {
+        nome: fornecedorToConfirm.nome,
+        cnpj: fornecedorToConfirm.cnpj,
+        email: fornecedorToConfirm.email,
+        telefone: fornecedorToConfirm.telefone,
+        ativo: true,
+      };
+      success = await atualizarFornecedor(fornecedorToConfirm.id, data);
+    }
+    setIsConfirmLoading(false);
 
     if (success) {
       setIsConfirmModalOpen(false);
-      setFornecedorToDelete(null);
+      setFornecedorToConfirm(null);
+      setModalAction(null);
       carregarFornecedores();
     }
   };
@@ -97,8 +118,9 @@ const FornecedorManagement: React.FC = () => {
 
   const handleCloseConfirmModal = () => {
     setIsConfirmModalOpen(false);
-    setFornecedorToDelete(null);
-    setIsDeletingLoading(false);
+    setFornecedorToConfirm(null);
+    setModalAction(null);
+    setIsConfirmLoading(false);
   }
 
   const stopPropagation = (e: React.MouseEvent) => {
@@ -114,8 +136,13 @@ const FornecedorManagement: React.FC = () => {
     };
     const timerId = setTimeout(checkReload, 0);
     return () => clearTimeout(timerId);
-
   }, [isFormOpen, carregarFornecedores]);
+
+  const modalTitle = modalAction === 'deactivate' ? 'Confirmar Desativação' : 'Confirmar Reativação';
+  const modalMessage = modalAction === 'deactivate' ?
+    `Tem certeza que deseja DESATIVAR o fornecedor "${fornecedorToConfirm?.nome}"?` :
+    `Tem certeza que deseja REATIVAR o fornecedor "${fornecedorToConfirm?.nome}"?`;
+  const confirmText = modalAction === 'deactivate' ? 'Desativar' : 'Reativar';
 
   return (
     <Layout title="Gerenciamento de Fornecedores">
@@ -123,27 +150,38 @@ const FornecedorManagement: React.FC = () => {
         <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 flex items-center">
           <Truck className="w-6 h-6 mr-2 text-cyan-600" />Fornecedores
         </h1>
-        <button
-          onClick={handleOpenCreateForm}
-          className="bg-cyan-600 text-white px-4 py-2 rounded-lg flex items-center justify-center hover:bg-cyan-700 transition-colors shadow-sm w-full sm:w-auto"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          Adicionar Fornecedor
-        </button>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <button
+            onClick={() => setShowInactive(!showInactive)}
+            className="bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors shadow-sm w-full sm:w-auto"
+          >
+            {showInactive ? <EyeOff className="h-5 w-5 mr-2" /> : <Eye className="h-5 w-5 mr-2" />}
+            {showInactive ? 'Ver Ativos' : 'Ver Inativos'}
+          </button>
+          <button
+            onClick={handleOpenCreateForm}
+            className="bg-cyan-600 text-white px-4 py-2 rounded-lg flex items-center justify-center hover:bg-cyan-700 transition-colors shadow-sm w-full sm:w-auto"
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            Adicionar Fornecedor
+          </button>
+        </div>
       </div>
 
       <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
-        {(isLoading && fornecedores.length === 0) ? (
+        {(isLoading && fornecedoresToDisplay.length === 0) ? (
           <LoadingSpinner text="Carregando fornecedores..." />
-        ) : fornecedores.length === 0 && !isLoading ? (
-          <p className="text-center py-10 text-gray-500 dark:text-gray-400">Nenhum fornecedor cadastrado.</p>
+        ) : fornecedoresToDisplay.length === 0 && !isLoading ? (
+          <p className="text-center py-10 text-gray-500 dark:text-gray-400">
+            {showInactive ? 'Nenhum fornecedor inativo.' : 'Nenhum fornecedor cadastrado.'}
+          </p>
         ) : (
           <>
             <div className="divide-y divide-gray-200 dark:divide-gray-700 lg:hidden">
-              {fornecedores.map((item) => (
+              {fornecedoresToDisplay.map((item) => (
                 <div
                   key={item.id}
-                  className="p-4 space-y-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                  className={`p-4 space-y-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer ${!item.ativo ? 'opacity-50' : ''}`}
                   onClick={() => handleOpenDetailsModal(item)}
                 >
                   <div className="flex justify-between items-center">
@@ -152,9 +190,15 @@ const FornecedorManagement: React.FC = () => {
                       <button onClick={() => handleOpenEditForm(item)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300" title="Editar">
                         <Edit className="h-5 w-5" />
                       </button>
-                      <button onClick={() => handleOpenDeleteModal(item)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" title="Desativar">
-                        <Trash2 className="h-5 w-5" />
-                      </button>
+                      {item.ativo ? (
+                        <button onClick={() => handleOpenConfirmModal('deactivate', item)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" title="Desativar">
+                          <Trash2 className="h-5 w-5" />
+                        </button>
+                      ) : (
+                        <button onClick={() => handleOpenConfirmModal('reactivate', item)} className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300" title="Reativar">
+                          <RefreshCw className="h-5 w-5" />
+                        </button>
+                      )}
                     </div>
                   </div>
                   <div className="text-sm text-gray-500 dark:text-gray-400 space-y-1">
@@ -177,27 +221,37 @@ const FornecedorManagement: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {fornecedores.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                {fornecedoresToDisplay.map((item) => (
+                  <tr
+                    key={item.id}
+                    className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer ${!item.ativo ? 'opacity-50' : ''}`}
+                    onClick={() => handleOpenDetailsModal(item)}
+                  >
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={() => handleOpenDetailsModal(item)}
-                        className="text-gray-900 dark:text-gray-100 hover:text-cyan-600 dark:hover:text-cyan-400"
-                      >
+                      <span className="text-gray-900 dark:text-gray-100">
                         {item.nome}
-                      </button>
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{item.cnpj || '-'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{item.email || '-'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{item.telefone || '-'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td
+                      className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"
+                      onClick={stopPropagation}
+                    >
                       <div className="flex items-center justify-end space-x-3">
                         <button onClick={() => handleOpenEditForm(item)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300" title="Editar fornecedor">
                           <Edit className="h-5 w-5" />
                         </button>
-                        <button onClick={() => handleOpenDeleteModal(item)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" title="Desativar fornecedor">
-                          <Trash2 className="h-5 w-5" />
-                        </button>
+                        {item.ativo ? (
+                          <button onClick={() => handleOpenConfirmModal('deactivate', item)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" title="Desativar fornecedor">
+                            <Trash2 className="h-5 w-5" />
+                          </button>
+                        ) : (
+                          <button onClick={() => handleOpenConfirmModal('reactivate', item)} className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300" title="Reativar fornecedor">
+                            <RefreshCw className="h-5 w-5" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -219,11 +273,11 @@ const FornecedorManagement: React.FC = () => {
       <ConfirmationModal
         isOpen={isConfirmModalOpen}
         onClose={handleCloseConfirmModal}
-        onConfirm={handleConfirmDelete}
-        title="Confirmar Desativação"
-        message={`Tem certeza que deseja DESATIVAR o fornecedor "${fornecedorToDelete?.nome}"? Esta ação não pode ser desfeita.`}
-        confirmText="Desativar"
-        isLoading={isDeletingLoading}
+        onConfirm={handleConfirmAction}
+        title={modalTitle}
+        message={modalMessage}
+        confirmText={confirmText}
+        isLoading={isConfirmLoading}
       />
 
       <FornecedorDetailsModal

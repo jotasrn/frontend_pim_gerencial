@@ -10,21 +10,23 @@ import { Link } from 'react-router-dom';
 import { formatDate } from '../../utils/apiHelpers';
 
 const EstoquistaDashboard: React.FC = () => {
-    const { produtos, loading: loadingProdutos } = useProdutos();
+    const { produtos, loading: loadingProdutos } = useProdutos({ status: 'all' });
     const { categorias, loading: loadingCategorias } = useCategorias();
     const { fornecedores, loading: loadingFornecedores } = useFornecedores();
-    const { lowStockProducts, expiredProducts } = useNotifications();
+    const { lowStockProducts, expiredProducts, loading: loadingNotifications } = useNotifications();
 
-    const isLoading = loadingProdutos || loadingCategorias || loadingFornecedores;
+    const isLoading = loadingProdutos || loadingCategorias || loadingFornecedores || loadingNotifications;
 
     const stats = useMemo(() => {
         const totalProdutos = produtos.length;
         const produtosAtivos = produtos.filter(p => p.ativo).length;
         const produtosInativos = totalProdutos - produtosAtivos;
-        const totalCategorias = categorias.length;
-        const totalFornecedores = fornecedores.length;
+
         const totalEstoqueBaixo = lowStockProducts.length;
         const totalVencidos = expiredProducts.length;
+
+        const totalCategorias = categorias.filter(c => c.ativo).length;
+        const totalFornecedores = fornecedores.filter(f => f.ativo).length;
 
         return [
             { id: 1, name: 'Total de Produtos', value: totalProdutos, icon: Package, color: 'text-blue-500' },
@@ -32,8 +34,8 @@ const EstoquistaDashboard: React.FC = () => {
             { id: 3, name: 'Estoque Baixo', value: totalEstoqueBaixo, icon: AlertTriangle, color: 'text-yellow-600', alert: totalEstoqueBaixo > 0 },
             { id: 4, name: 'Produtos Vencidos', value: totalVencidos, icon: AlertCircle, color: 'text-red-600', alert: totalVencidos > 0 },
             { id: 5, name: 'Produtos Inativos', value: produtosInativos, icon: XSquare, color: 'text-gray-500' },
-            { id: 6, name: 'Total Fornecedores', value: totalFornecedores, icon: Truck, color: 'text-cyan-500' },
-            { id: 7, name: 'Total Categorias', value: totalCategorias, icon: LayoutGrid, color: 'text-purple-500' },
+            { id: 6, name: 'Fornecedores Ativos', value: totalFornecedores, icon: Truck, color: 'text-cyan-500' },
+            { id: 7, name: 'Categorias Ativas', value: totalCategorias, icon: LayoutGrid, color: 'text-purple-500' },
         ];
     }, [produtos, categorias, fornecedores, lowStockProducts, expiredProducts]);
 

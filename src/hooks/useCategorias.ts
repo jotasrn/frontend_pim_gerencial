@@ -67,7 +67,7 @@ export const useCategorias = (): UseCategoriasReturn => {
     setError(null);
     try {
       await categoriaService.desativar(id);
-      showToast.success('Categoria removida com sucesso!');
+      showToast.success('Categoria desativada com sucesso!');
       return true;
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';

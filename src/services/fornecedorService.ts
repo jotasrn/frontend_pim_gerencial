@@ -22,7 +22,7 @@ const handleError = (error: unknown, defaultMessage: string): string => {
 export const fornecedorService = {
   listar: async (): Promise<Fornecedor[]> => {
     try {
-      const response = await api.get<Fornecedor[]>('/fornecedores');
+      const response = await api.get<Fornecedor[]>('/fornecedores?status=all');
       return response.data;
     } catch (error) {
       throw new Error(handleError(error, 'Não foi possível carregar os fornecedores.'));
