@@ -2,7 +2,6 @@ import React from 'react';
 import { useNotifications } from '../../contexts/NotificacaoContext';
 import { X, Bell, AlertCircle, Archive, Clock, TrendingDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { NotificationDTO } from '../../types';
 
 interface ModalProps {
     isOpen: boolean;
