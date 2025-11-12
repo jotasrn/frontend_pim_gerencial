@@ -1,5 +1,5 @@
 import api from './api';
-import { Usuario } from '../types';
+import { Usuario, UsuarioData } from '../types';
 import axios, { AxiosError } from 'axios';
 
 interface ApiErrorResponse {
@@ -29,15 +29,21 @@ export interface EntregadorPerfilUpdateDTO {
     placaVeiculo?: string;
 }
 
-export interface EntregadorCadastroDTO {
-    nomeCompleto: string;
-    email: string;
-    senha?: string;
+export type EntregadorCadastroDTO = UsuarioData & {
     tipoVeiculo?: string;
-    placa?: string;
-}
+    placaVeiculo?: string;
+};
 
 export const entregadorService = {
+    criarEntregador: async (dados: EntregadorCadastroDTO): Promise<Entregador> => {
+        try {
+            const response = await api.post<Entregador>('/entregadores', dados);
+            return response.data;
+        } catch (error) {
+            throw new Error(handleError(error, 'Não foi possível criar o entregador.'));
+        }
+    },
+
     buscarMeuPerfil: async (): Promise<Entregador> => {
         try {
             const response = await api.get<Entregador>(`/entregadores/me`);
@@ -65,7 +71,7 @@ export const entregadorService = {
         }
     },
 
-    atualizarEntregador: async (id: number, dados: EntregadorCadastroDTO): Promise<Entregador> => {
+    atualizarEntregador: async (id: number, dados: Partial<EntregadorCadastroDTO>): Promise<Entregador> => {
         try {
             const response = await api.put<Entregador>(`/entregadores/${id}`, dados);
             return response.data;

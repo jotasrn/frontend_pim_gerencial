@@ -14,9 +14,10 @@ import Dashboard from './pages/Dashboard';
 import ManagerDashboard from './pages/gerente/GerenteDashboard';
 import UserManagement from './pages/gerente/UsuariosManagement';
 import PromotionManagement from './pages/gerente/PromocaoManagement';
-import CustomerList from './pages/gerente/CustomerList';
+import CustomerList from './pages/gerente/ClientesrLista';
 import FaqManagement from './pages/gerente/FaqManagement';
 import DuvidasManagement from './pages/gerente/DuvidasManagement';
+import SalesHistory from './pages/gerente/HistoricoVendas'; 
 
 import EstoquistaDashboard from './pages/estoquista/EstoquistaDashboard';
 import ProductManagement from './pages/estoquista/ProdutoManagement';
@@ -51,7 +52,6 @@ function App() {
                                         path="/perfil"
                                         element={<ProtectedRoute><UserProfile /></ProtectedRoute>}
                                     />
-
                                     <Route
                                         path="/gerente"
                                         element={<ProtectedRoute permissaoRequerida="gerente"><ManagerDashboard /></ProtectedRoute>}
@@ -69,6 +69,10 @@ function App() {
                                         element={<ProtectedRoute permissaoRequerida="gerente"><CustomerList /></ProtectedRoute>}
                                     />
                                     <Route
+                                        path="/gerente/vendas"
+                                        element={<ProtectedRoute permissaoRequerida="gerente"><SalesHistory /></ProtectedRoute>}
+                                    />
+                                    <Route
                                         path="/gerente/faq"
                                         element={<ProtectedRoute permissaoRequerida="gerente"><FaqManagement /></ProtectedRoute>}
                                     />
@@ -76,7 +80,6 @@ function App() {
                                         path="/gerente/duvidas"
                                         element={<ProtectedRoute permissaoRequerida="gerente"><DuvidasManagement /></ProtectedRoute>}
                                     />
-
                                     <Route
                                         path="/estoquista"
                                         element={<ProtectedRoute permissaoRequerida="estoquista"><EstoquistaDashboard /></ProtectedRoute>}
@@ -97,7 +100,6 @@ function App() {
                                         path="/estoquista/perdas"
                                         element={<ProtectedRoute permissaoRequerida="estoquista"><PerdaManagement /></ProtectedRoute>}
                                     />
-
                                     <Route
                                         path="/entregador"
                                         element={<ProtectedRoute permissaoRequerida="entregador"><Entregador /></ProtectedRoute>}
@@ -110,7 +112,6 @@ function App() {
                                         path="/entregador/historico"
                                         element={<ProtectedRoute permissaoRequerida="entregador"><HistoricoEntregador /></ProtectedRoute>}
                                     />
-
                                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
                                 </Routes>
                             </div>

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { promocaoService } from '../services/promocaoService';
 import { showToast } from '../components/Toast';
 import { Promocao, FiltrosPromocoes } from '../types';
+import { useNotifications } from '../contexts/NotificacaoContext';
 
 interface UsePromocoesReturn {
   promocoes: Promocao[];
@@ -10,24 +11,50 @@ interface UsePromocoesReturn {
   carregarPromocoes: () => void;
   criarPromocao: (formData: FormData) => Promise<boolean>;
   atualizarPromocao: (id: number, formData: FormData) => Promise<boolean>;
-  removerPromocao: (id: number) => Promise<boolean>;
-  associarProduto: (promocaoId: number, produtoId: number) => Promise<boolean>;
+  desativarPromocao: (id: number) => Promise<boolean>;
+  atualizarFiltros: (novosFiltros: Partial<FiltrosPromocoes>) => void;
 }
 
-// Objeto vazio estático para evitar recriação no useCallback
+// Função para verificar se a data de fim já passou
+const isExpired = (dataFim: string): boolean => {
+  const today = new Date();
+  const endDate = new Date(dataFim);
+  endDate.setHours(23, 59, 59, 999);
+  return endDate < today;
+};
+
 const filtrosPadrao: FiltrosPromocoes = {};
 
 export const usePromocoes = (filtrosIniciais: FiltrosPromocoes = filtrosPadrao): UsePromocoesReturn => {
   const [promocoes, setPromocoes] = useState<Promocao[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [filtros, setFiltros] = useState<FiltrosPromocoes>(filtrosIniciais);
 
-  // filtrosIniciais agora é estável
+  const { refetchNotifications } = useNotifications();
+  const filtrosString = JSON.stringify(filtros); // Dependência estável
+
   const carregarPromocoes = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const dados = await promocaoService.listar(filtrosIniciais);
+      const dados = await promocaoService.listar(filtros);
+
+      const deactivationPromises: Promise<void>[] = [];
+      dados.forEach(promo => {
+        if (promo.ativa && isExpired(promo.dataFim)) {
+          console.warn(`Promoção "${promo.descricao}" expirou e será desativada.`);
+          deactivationPromises.push(promocaoService.desativar(promo.id));
+          promo.ativa = false;
+        }
+      });
+
+      if (deactivationPromises.length > 0) {
+        await Promise.all(deactivationPromises);
+        showToast.info(`${deactivationPromises.length} promoção(ões) expiradas foram desativadas.`);
+        refetchNotifications(); // Atualiza o sino
+      }
+
       setPromocoes(dados);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
@@ -36,13 +63,14 @@ export const usePromocoes = (filtrosIniciais: FiltrosPromocoes = filtrosPadrao):
     } finally {
       setLoading(false);
     }
-  }, [filtrosIniciais]);
+  }, [filtrosString, refetchNotifications, filtros]); // Correção do Linter
 
   const criarPromocao = async (formData: FormData): Promise<boolean> => {
     setError(null);
     try {
       await promocaoService.criar(formData);
       showToast.success('Promoção criada com sucesso!');
+      refetchNotifications();
       return true;
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
@@ -57,6 +85,7 @@ export const usePromocoes = (filtrosIniciais: FiltrosPromocoes = filtrosPadrao):
     try {
       await promocaoService.atualizar(id, formData);
       showToast.success('Promoção atualizada com sucesso!');
+      refetchNotifications();
       return true;
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
@@ -66,11 +95,12 @@ export const usePromocoes = (filtrosIniciais: FiltrosPromocoes = filtrosPadrao):
     }
   };
 
-  const removerPromocao = async (id: number): Promise<boolean> => {
+  const desativarPromocao = async (id: number): Promise<boolean> => {
     setError(null);
     try {
-      await promocaoService.remover(id);
-      showToast.success('Promoção removida com sucesso!');
+      await promocaoService.desativar(id);
+      showToast.success('Promoção desativada com sucesso!');
+      refetchNotifications();
       return true;
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
@@ -80,18 +110,11 @@ export const usePromocoes = (filtrosIniciais: FiltrosPromocoes = filtrosPadrao):
     }
   };
 
-  const associarProduto = async (promocaoId: number, produtoId: number): Promise<boolean> => {
-    setError(null);
-    try {
-        await promocaoService.associarProduto(promocaoId, produtoId);
-        showToast.success('Produto associado à promoção!');
-        return true;
-    } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
-        showToast.error(`Erro ao associar produto: ${errorMessage}`);
-        return false;
-    }
-  };
+  // FUNÇÃO 'associarProduto' REMOVIDA
+
+  const atualizarFiltros = useCallback((novosFiltros: Partial<FiltrosPromocoes>) => {
+    setFiltros(prev => ({ ...prev, ...novosFiltros }));
+  }, []);
 
   useEffect(() => {
     carregarPromocoes();
@@ -104,7 +127,7 @@ export const usePromocoes = (filtrosIniciais: FiltrosPromocoes = filtrosPadrao):
     carregarPromocoes,
     criarPromocao,
     atualizarPromocao,
-    removerPromocao,
-    associarProduto,
+    desativarPromocao,
+    atualizarFiltros,
   };
 };

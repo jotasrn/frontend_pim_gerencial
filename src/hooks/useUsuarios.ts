@@ -1,15 +1,21 @@
 import { useState, useEffect, useCallback } from 'react';
 import { usuarioService } from '../services/usuarioService';
+import { entregadorService } from '../services/entregadorService';
 import { showToast } from '../components/Toast';
 import { Usuario, UsuarioData } from '../types';
+
+type UsuarioDataCompleta = UsuarioData & {
+  tipoVeiculo?: string;
+  placaVeiculo?: string;
+};
 
 interface UseUsuariosReturn {
   usuarios: Usuario[];
   loading: boolean;
   error: string | null;
   carregarUsuarios: () => void;
-  criarUsuario: (usuario: UsuarioData) => Promise<boolean>;
-  atualizarUsuario: (id: number, usuario: Partial<UsuarioData>) => Promise<boolean>;
+  criarUsuario: (usuario: UsuarioDataCompleta) => Promise<boolean>;
+  atualizarUsuario: (id: number, usuario: Partial<UsuarioDataCompleta>) => Promise<boolean>;
   removerUsuario: (id: number) => Promise<boolean>;
 }
 
@@ -23,7 +29,7 @@ export const useUsuarios = (): UseUsuariosReturn => {
     setError(null);
     try {
       const dados = await usuarioService.listar();
-      setUsuarios(dados); 
+      setUsuarios(dados);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
       setError(errorMessage);
@@ -33,10 +39,14 @@ export const useUsuarios = (): UseUsuariosReturn => {
     }
   }, []);
 
-  const criarUsuario = async (usuario: UsuarioData): Promise<boolean> => {
+  const criarUsuario = async (usuario: UsuarioDataCompleta): Promise<boolean> => {
     setError(null);
     try {
-      await usuarioService.criar(usuario);
+      if (usuario.permissao === 'entregador') {
+        await entregadorService.criarEntregador(usuario);
+      } else {
+        await usuarioService.criar(usuario);
+      }
       showToast.success('Usuário criado com sucesso!');
       return true;
     } catch (err: unknown) {
@@ -47,10 +57,14 @@ export const useUsuarios = (): UseUsuariosReturn => {
     }
   };
 
-  const atualizarUsuario = async (id: number, usuario: Partial<UsuarioData>): Promise<boolean> => {
-     setError(null);
+  const atualizarUsuario = async (id: number, usuario: Partial<UsuarioDataCompleta>): Promise<boolean> => {
+    setError(null);
     try {
-      await usuarioService.atualizar(id, usuario);
+      if (usuario.permissao === 'entregador') {
+        await entregadorService.atualizarEntregador(id, usuario);
+      } else {
+        await usuarioService.atualizar(id, usuario);
+      }
       showToast.success('Usuário atualizado com sucesso!');
       return true;
     } catch (err: unknown) {

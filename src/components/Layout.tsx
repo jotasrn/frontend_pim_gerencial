@@ -1,6 +1,6 @@
 import React, { ReactNode, useState } from 'react';
 import { NavLink, useNavigate, Link } from 'react-router-dom';
-import { Leaf, Users, Tag, BarChart2, User, LogOut, Bell, LayoutGrid, Clock, UserCircle, Truck, HelpCircle, BookOpen, Package, Menu, X, Archive} from 'lucide-react';
+import { Leaf, Users, Tag, BarChart2, User, LogOut, Bell, LayoutGrid, Clock, UserCircle, Truck, HelpCircle, BookOpen, Package, Menu, X, Archive, ShoppingCart } from 'lucide-react';
 import { useAuth, TipoUsuario } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificacaoContext';
 import NotificationModal from './modals/NotificacaoModal';
@@ -31,6 +31,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
       case 'gerente':
         return [
           { nome: 'Dashboard', icone: <BarChart2 size={20} />, path: '/gerente', end: true },
+          { nome: 'Historico Vendas', icone: <ShoppingCart size={20} />, path: '/gerente/vendas' },
           { nome: 'Usuários', icone: <Users size={20} />, path: '/gerente/usuarios' },
           { nome: 'Promoções', icone: <Tag size={20} />, path: '/gerente/promocoes' },
           { nome: 'Clientes', icone: <User size={20} />, path: '/gerente/clientes' },
@@ -39,7 +40,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
         ];
       case 'estoquista':
         return [
-          { nome: 'Dashboard', icone: <BarChart2 size={20} />, path: '/estoquista', end: true }, 
+          { nome: 'Dashboard', icone: <BarChart2 size={20} />, path: '/estoquista', end: true },
           { nome: 'Produtos', icone: <Package size={20} />, path: '/estoquista/produtos' },
           { nome: 'Categorias', icone: <LayoutGrid size={20} />, path: '/estoquista/categorias' },
           { nome: 'Fornecedores', icone: <Truck size={20} />, path: '/estoquista/fornecedores' },
@@ -52,7 +53,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
         ];
       default:
         return [
-          { nome: 'Dashboard', icone: <BarChart2 size={20} />, path: '/dashboard', end: true }, 
+          { nome: 'Dashboard', icone: <BarChart2 size={20} />, path: '/dashboard', end: true },
         ];
     }
   };
@@ -85,7 +86,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
 
         <aside
           className={`fixed inset-y-0 left-0 z-30 w-64 bg-white dark:bg-gray-800 shadow-md flex flex-col transform transition-transform duration-300 ease-in-out lg:translate-x-0 
-           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+     ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
         >
           <div className="flex items-center justify-between h-16 border-b dark:border-gray-700 px-4">
             <Link to="/dashboard" onClick={closeMobileMenu} className="flex items-center">

@@ -10,6 +10,8 @@ export interface Usuario {
   ativo?: boolean;
   googleId?: string;
   is2faEnabled?: boolean;
+  tipoVeiculo?: string;
+  placaVeiculo?: string;
 }
 
 export type UsuarioData = {
@@ -194,6 +196,7 @@ export type PromocaoData = {
 export interface FiltrosPromocoes {
   ativa?: boolean;
   data?: string;
+  status?: 'all';
 }
 
 export interface FiltrosRelatorios {
@@ -277,8 +280,8 @@ export interface EntregaStatusUpdate {
 
 export interface NotificationDTO {
   id: string;
-  tipo: string; 
+  tipo: string;
   titulo: string;
   mensagem: string;
-  link: string; 
+  link: string;
 }

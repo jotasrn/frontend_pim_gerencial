@@ -59,22 +59,12 @@ export const promocaoService = {
     }
   },
 
-  remover: async (id: number): Promise<void> => {
+  desativar: async (id: number): Promise<void> => {
     try {
-      await api.delete(`/promocoes/${id}`);
+      await api.put(`/promocoes/${id}/desativar`);
     } catch (error) {
-      throw new Error(handleError(error, 'Não foi possível remover a promoção.'));
+      throw new Error(handleError(error, 'Não foi possível desativar a promoção.'));
     }
   },
 
-  associarProduto: async (promocaoId: number, produtoId: number): Promise<Promocao> => {
-    try {
-      const response = await api.post<Promocao>(`/promocoes/${promocaoId}/associar-produto`, {
-        produtoId,
-      });
-      return response.data;
-    } catch (error) {
-      throw new Error(handleError(error, 'Não foi possível associar o produto.'));
-    }
-  },
 };
