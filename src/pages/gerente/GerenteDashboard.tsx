@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react'; // Importar useCallback, useState, useEffect
 import Layout from '../../components/Layout';
 import { Users, ShoppingBag, Tag, ShoppingCart, Truck, AlertCircle } from 'lucide-react';
 import { SalesLineChart, SalesByCategoryChart, TopProductsChart } from '../../components/charts/SalesChart';
@@ -6,22 +6,46 @@ import { StockGaugeChart } from '../../components/charts/StockChart';
 import { LossByReasonChart } from '../../components/charts/LossChart';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useRelatorios } from '../../hooks/useRelatorios';
-import { formatCurrency, formatDateTime } from '../../utils/apiHelpers';
-import { Venda } from '../../types';
+import { formatCurrency, formatDateTime, formatDate } from '../../utils/apiHelpers';
+import { Venda, FiltrosRelatorios } from '../../types'; // Importar FiltrosRelatorios
 
 const CHART_COLORS = ['#10B981', '#F59E0B', '#EF4444', '#3B82F6', '#6366F1', '#EC4899'];
 
+// Helper para datas padrão
+const getDefaultDateRange = () => {
+  const endDate = new Date();
+  const startDate = new Date();
+  startDate.setDate(endDate.getDate() - 7); // Padrão 7 dias
+  return {
+    dataInicio: startDate.toISOString().split('T')[0],
+    dataFim: endDate.toISOString().split('T')[0],
+  };
+};
+
 const ManagerDashboard: React.FC = () => {
+  const [filtros] = useState<FiltrosRelatorios>(getDefaultDateRange());
+
   const {
     vendasPorCategoria,
     topProdutos,
     perdasPorMotivo,
     estoqueCritico,
     vendasRecentes,
+    kpis,
     loading,
     error,
     carregarRelatorios,
   } = useRelatorios();
+
+  // Carrega os dados na montagem e quando os filtros mudam
+  useEffect(() => {
+    carregarRelatorios(filtros);
+  }, [carregarRelatorios, filtros]);
+
+  // Função para o botão "Tentar Novamente"
+  const handleRetry = () => {
+    carregarRelatorios(filtros);
+  };
 
   const salesByCategoryChartData = useMemo(() => ({
     labels: vendasPorCategoria.map(item => item.categoria),
@@ -48,25 +72,45 @@ const ManagerDashboard: React.FC = () => {
     }],
   }), [perdasPorMotivo]);
 
-  const salesLineDataPlaceholder = useMemo(() => ({
-    labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'],
-    datasets: [{
-      label: 'Vendas da Semana (R$)',
-      data: [120, 190, 150, 250, 220, 300, 270],
-      borderColor: 'rgb(16, 185, 129)',
-      backgroundColor: 'rgba(16, 185, 129, 0.2)',
-      tension: 0.1,
-    }],
-  }), []);
+  const salesLineChartData = useMemo(() => {
+    if (!vendasRecentes || vendasRecentes.length === 0) {
+      return { labels: [], datasets: [] };
+    }
+
+    const salesByDate = new Map<string, number>();
+    vendasRecentes.forEach(venda => {
+      const date = formatDate(venda.dataHora);
+      const total = salesByDate.get(date) || 0;
+      salesByDate.set(date, total + venda.valorTotal);
+    });
+
+    const sortedSales = new Map([...salesByDate.entries()].sort((a, b) => {
+      const [dayA, monthA, yearA] = a[0].split('/').map(Number);
+      const [dayB, monthB, yearB] = b[0].split('/').map(Number);
+      return new Date(yearA, monthA - 1, dayA).getTime() - new Date(yearB, monthB - 1, dayB).getTime();
+    }));
+
+    return {
+      labels: Array.from(sortedSales.keys()),
+      datasets: [{
+        label: 'Vendas (R$)',
+        data: Array.from(sortedSales.values()),
+        borderColor: 'rgb(16, 185, 129)',
+        backgroundColor: 'rgba(16, 185, 129, 0.2)',
+        tension: 0.1,
+        fill: true,
+      }],
+    };
+  }, [vendasRecentes]);
 
   const stats = useMemo(() => [
-    { id: 1, name: 'Usuários Ativos', value: '...', icon: <Users className="h-6 w-6 text-blue-500" /> },
+    { id: 1, name: 'Usuários Ativos', value: kpis.usuariosAtivos ?? '...', icon: <Users className="h-6 w-6 text-blue-500" /> },
     { id: 2, name: 'Total Produtos', value: estoqueCritico ? estoqueCritico.totalItens.toString() : '...', icon: <ShoppingBag className="h-6 w-6 text-green-500" /> },
-    { id: 3, name: 'Promoções Ativas', value: '...', icon: <Tag className="h-6 w-6 text-purple-500" /> },
-    { id: 4, name: 'Pedidos Hoje', value: '...', icon: <ShoppingCart className="h-6 w-6 text-orange-500" /> },
-    { id: 5, name: 'Entregas Pendentes', value: '...', icon: <Truck className="h-6 w-6 text-yellow-500" /> },
+    { id: 3, name: 'Promoções Ativas', value: kpis.promocoesAtivas ?? '...', icon: <Tag className="h-6 w-6 text-purple-500" /> },
+    { id: 4, name: 'Pedidos Hoje', value: kpis.pedidosHoje ?? '...', icon: <ShoppingCart className="h-6 w-6 text-orange-500" /> },
+    { id: 5, name: 'Entregas Pendentes', value: kpis.entregasPendentes ?? '...', icon: <Truck className="h-6 w-6 text-yellow-500" /> },
     { id: 6, name: 'Estoque Baixo', value: estoqueCritico ? estoqueCritico.itensCriticos.toString() : '...', icon: <AlertCircle className="h-6 w-6 text-red-500" /> },
-  ], [estoqueCritico]);
+  ], [estoqueCritico, kpis]);
 
   if (loading) {
     return (
@@ -84,8 +128,8 @@ const ManagerDashboard: React.FC = () => {
           <p className="font-semibold mb-2">Erro ao carregar dados do dashboard:</p>
           <p className="text-sm mb-4">{error}</p>
           <button
-            onClick={carregarRelatorios}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            onClick={handleRetry} // CORREÇÃO: Chamar a função wrapper
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
           >
             Tentar Novamente
           </button>
@@ -130,10 +174,10 @@ const ManagerDashboard: React.FC = () => {
                 </div>
                 <div className="flex justify-between items-center text-sm">
                   <span className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full capitalize ${order.statusPedido === 'CONCLUIDO' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100' :
-                      order.statusPedido === 'EM_ENTREGA' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100' :
-                        order.statusPedido === 'PAGAMENTO_APROVADO' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100' :
-                          order.statusPedido === 'CANCELADO' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100' :
-                            'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                    order.statusPedido === 'EM_ENTREGA' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100' :
+                      order.statusPedido === 'PAGAMENTO_APROVADO' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100' :
+                        order.statusPedido === 'CANCELADO' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100' :
+                          'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
                     }`}>
                     {order.statusPedido?.replace('_', ' ').toLowerCase() || 'N/A'}
                   </span>
@@ -190,12 +234,16 @@ const ManagerDashboard: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
             <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Vendas na Semana (Exemplo)</h3>
-            <SalesLineChart data={salesLineDataPlaceholder} />
+            <div className="relative h-72 md:h-80">
+              <SalesLineChart data={salesLineChartData} />
+            </div>
           </div>
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
             <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Distribuição de Vendas por Categoria</h3>
             {vendasPorCategoria.length > 0 ? (
-              <SalesByCategoryChart data={salesByCategoryChartData} />
+              <div className="relative h-72 md:h-80">
+                <SalesByCategoryChart data={salesByCategoryChartData} />
+              </div>
             ) : (
               <p className="text-center text-gray-500 dark:text-gray-400 py-8">Sem dados de vendas por categoria.</p>
             )}
@@ -203,7 +251,9 @@ const ManagerDashboard: React.FC = () => {
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
             <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Principais Motivos de Perda</h3>
             {perdasPorMotivo.length > 0 ? (
-              <LossByReasonChart data={lossByReasonChartData} />
+              <div className="relative h-72 md:h-80">
+                <LossByReasonChart data={lossByReasonChartData} />
+              </div>
             ) : (
               <p className="text-center text-gray-500 dark:text-gray-400 py-8">Sem dados de perdas registradas.</p>
             )}
@@ -211,10 +261,12 @@ const ManagerDashboard: React.FC = () => {
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow flex flex-col items-center justify-center min-h-[300px]">
             <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4 self-start">Status do Estoque Crítico</h3>
             {estoqueCritico && estoqueCritico.totalItens > 0 ? (
-              <StockGaugeChart
-                criticalItems={estoqueCritico.itensCriticos}
-                totalItems={estoqueCritico.totalItens}
-              />
+              <div className="relative h-64 w-full">
+                <StockGaugeChart
+                  criticalItems={estoqueCritico.itensCriticos}
+                  totalItems={estoqueCritico.totalItens}
+                />
+              </div>
             ) : (
               <p className="text-center text-gray-500 dark:text-gray-400">Sem dados de estoque crítico.</p>
             )}
@@ -223,13 +275,15 @@ const ManagerDashboard: React.FC = () => {
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mt-6">
           <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Top 5 Produtos Mais Vendidos (Unidades)</h3>
           {topProdutos.length > 0 ? (
-            <TopProductsChart data={topProductsChartData} />
+            <div className="relative h-72 md:h-80">
+              <TopProductsChart data={topProductsChartData} />
+            </div>
           ) : (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">Sem dados de produtos vendidos.</p>
           )}
         </div>
       </div>
-    </Layout>
+    </Layout >
   );
 };
 

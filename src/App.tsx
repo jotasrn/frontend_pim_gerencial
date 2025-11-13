@@ -24,6 +24,7 @@ import ProductManagement from './pages/estoquista/ProdutoManagement';
 import CategoryManagement from './pages/estoquista/CategoriaManagement';
 import FornecedorManagement from './pages/estoquista/FornecedorManagement';
 import PerdaManagement from './pages/estoquista/PerdaManagement';
+import RelatoriosPage from './pages/gerente/RelatoriosPage';
 
 import Entregador from './pages/entregador/EntregadorDashboard';
 import DetalhesEntrega from './pages/entregador/DetalhesEntrega';
@@ -79,6 +80,10 @@ function App() {
                                     <Route
                                         path="/gerente/duvidas"
                                         element={<ProtectedRoute permissaoRequerida="gerente"><DuvidasManagement /></ProtectedRoute>}
+                                    />
+                                    <Route
+                                        path="/gerente/relatorios"
+                                        element={<ProtectedRoute permissaoRequerida="gerente"><RelatoriosPage /></ProtectedRoute>}
                                     />
                                     <Route
                                         path="/estoquista"

@@ -3,7 +3,10 @@ import Layout from '../components/Layout';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/TemaContext';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { UserCircle, Mail, ShieldCheck, Car, ClipboardIcon, Save, X, Edit, AlertCircle, Moon, Sun } from 'lucide-react';
+import { 
+  UserCircle, Mail, ShieldCheck, Car, ClipboardIcon, 
+  Save, X, Edit, AlertCircle, Moon, Sun 
+} from 'lucide-react';
 import { entregadorService, EntregadorPerfilUpdateDTO } from '../services/entregadorService';
 import { usuarioService } from '../services/usuarioService';
 import { showToast } from '../components/Toast';
@@ -50,8 +53,8 @@ const UserProfile: React.FC = () => {
 
       setFormData({
         nomeCompleto: nome,
-        tipoVeiculo: tipoVeiculo,
-        placaVeiculo: placaVeiculo,
+        tipoVeiculo,
+        placaVeiculo,
       });
 
     } catch (err) {
@@ -149,7 +152,7 @@ const UserProfile: React.FC = () => {
           <div className="flex justify-between items-center mb-6 border-b dark:border-gray-700 pb-4">
             <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">Informações da Conta</h2>
             {usuario.permissao === 'entregador' && !isEditing && (
-              <button type="button" onClick={() => setIsEditing(true)} className='btn btn-outline btn-sm border-indigo-500 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-gray-700 flex items-center gap-2'>
+              <button type="button" onClick={() => setIsEditing(true)} className="btn-blue">
                 <Edit className="w-4 h-4" />
                 Editar Perfil
               </button>
@@ -170,11 +173,13 @@ const UserProfile: React.FC = () => {
                 className="input-profile"
               />
             </div>
+
             <div className="flex flex-col sm:flex-row sm:items-center min-h-[30px]">
               <Mail className="w-5 h-5 text-gray-500 dark:text-gray-400 mr-3 mb-1 sm:mb-0" />
               <span className="text-sm font-medium text-gray-600 dark:text-gray-300 sm:w-28">Email:</span>
               <span className="text-sm text-gray-500 dark:text-gray-400">{usuario.email}</span>
             </div>
+
             <div className="flex flex-col sm:flex-row sm:items-center min-h-[30px]">
               <ShieldCheck className="w-5 h-5 text-gray-500 dark:text-gray-400 mr-3 mb-1 sm:mb-0" />
               <span className="text-sm font-medium text-gray-600 dark:text-gray-300 sm:w-28">Função:</span>
@@ -201,6 +206,7 @@ const UserProfile: React.FC = () => {
                     <option value="BICICLETA">Bicicleta</option>
                   </select>
                 </div>
+
                 <div className="flex flex-col sm:flex-row sm:items-center min-h-[30px]">
                   <ClipboardIcon className="w-5 h-5 text-gray-500 dark:text-gray-400 mr-3 mb-1 sm:mb-0" />
                   <label htmlFor="placaVeiculo" className="text-sm font-medium text-gray-600 dark:text-gray-300 sm:w-28">Placa:</label>
@@ -217,25 +223,21 @@ const UserProfile: React.FC = () => {
                 </div>
               </>
             )}
-
           </div>
 
           {isEditing && (
             <div className="mt-8 pt-6 border-t dark:border-gray-700 flex items-center justify-end gap-3">
-              <button type="button" onClick={handleCancel} disabled={isLoading} className='btn btn-outline btn-sm border-gray-500 text-gray-600 dark:text-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2'>
+              <button type="button" onClick={handleCancel} disabled={isLoading} className="btn-gray">
                 <X className="w-4 h-4" />
                 Cancelar
               </button>
-              <button type="submit" disabled={isLoading} className='btn btn-sm bg-green-600 text-white hover:bg-green-700 flex items-center gap-2'>
-                {isLoading ? (
-                  <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                ) : (
-                  <Save className="w-4 h-4" />
+              <button type="submit" disabled={isLoading} className="btn-green">
+                {isLoading ? 'Salvando...' : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    Salvar Alterações
+                  </>
                 )}
-                {isLoading ? 'Salvando...' : 'Salvar Alterações'}
               </button>
             </div>
           )}
@@ -248,70 +250,51 @@ const UserProfile: React.FC = () => {
                   <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
                     Tema atual: {theme === 'dark' ? 'Escuro' : 'Claro'}
                   </span>
-                  <button
-                    type="button"
-                    onClick={toggleTheme}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-gray-400 dark:border-gray-600 
-                 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-                  >
-                    {theme === 'dark' ? (
-                      <>
-                        <Sun className="w-4 h-4 text-yellow-400" /> <span>Modo Claro</span>
-                      </>
-                    ) : (
-                      <>
-                        <Moon className="w-4 h-4 text-gray-500" /> <span>Modo Escuro</span>
-                      </>
-                    )}
+                  <button type="button" onClick={toggleTheme} className="btn-gray flex items-center gap-2">
+                    {theme === 'dark' ? <><Sun className="w-4 h-4 text-yellow-400" /> Modo Claro</> : <><Moon className="w-4 h-4" /> Modo Escuro</>}
                   </button>
                 </div>
               </div>
 
               <div className="mt-8 pt-6 border-t dark:border-gray-700">
                 <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">Ações da Conta</h3>
-                <div className='flex flex-col sm:flex-row gap-3'>
-                  <button type="button" onClick={() => setIsPasswordModalOpen(true)} className='btn btn-outline btn-sm border-gray-500 text-gray-600 dark:text-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button type="button" onClick={() => setIsPasswordModalOpen(true)} className="btn-gray">
                     Alterar Senha
                   </button>
-                  <button type="button" onClick={() => setIs2FAModalOpen(true)} className='btn btn-outline btn-sm border-gray-500 text-gray-600 dark:text-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'>
+                  <button type="button" onClick={() => setIs2FAModalOpen(true)} className="btn-gray">
                     Gerenciar 2FA
                   </button>
                 </div>
               </div>
             </>
           )}
-
         </form>
-        <style>{`
-    .btn { @apply px-4 py-1.5 rounded-md text-sm font-medium transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2; }
-    .btn-sm { @apply px-3 py-1.5 text-xs; }
-    .btn-outline { @apply bg-transparent border hover:bg-opacity-75; }
-    .input { @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100; }
-    .input-error { @apply border-red-500 focus:ring-red-500; }
-    .input-profile { @apply text-sm text-gray-800 dark:text-gray-100 flex-1 bg-transparent rounded-md; }
-    .input-profile:disabled { @apply text-gray-500 dark:text-gray-400 bg-transparent cursor-not-allowed; }
-    .input-profile[readonly] { @apply text-gray-800 dark:text-gray-100 cursor-default; } 
-    .input-profile:not(:disabled) { @apply px-2 py-1 bg-gray-100 dark:bg-gray-700 dark:text-gray-100 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500; }
-    select.input-profile { @apply appearance-auto; }
-    select.input-profile[disabled] { @apply appearance-none; }
 
-    .theme-toggle { @apply relative w-12 h-6 flex items-center bg-gray-200 dark:bg-gray-700 rounded-full p-1 cursor-pointer transition-colors; }
-    .theme-toggle-nub { @apply w-4 h-4 bg-white rounded-full shadow-md transform transition-transform; }
-    .dark .theme-toggle-nub { @apply translate-x-6; }
-    .theme-toggle > svg { @apply absolute transition-opacity; }
-    .theme-toggle > .lucide-sun { @apply left-2 opacity-100 dark:opacity-0; }
-    .theme-toggle > .lucide-moon { @apply right-2 opacity-0 dark:opacity-100; }
-   `}</style>
+        <style>{`
+          .btn-green {
+            @apply inline-flex items-center gap-2 bg-green-600 text-white font-medium px-4 py-2 rounded-md shadow hover:bg-green-700 transition disabled:opacity-70;
+          }
+          .btn-blue {
+            @apply inline-flex items-center gap-2 bg-blue-600 text-white font-medium px-3 py-1.5 rounded-md shadow hover:bg-blue-700 transition disabled:opacity-70;
+          }
+          .btn-gray {
+            @apply inline-flex items-center gap-2 bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-medium px-3 py-1.5 rounded-md shadow hover:bg-gray-400 dark:hover:bg-gray-600 transition disabled:opacity-70;
+          }
+          .input-profile {
+            @apply text-sm text-gray-800 dark:text-gray-100 flex-1 bg-transparent rounded-md;
+          }
+          .input-profile:not(:disabled) {
+            @apply px-2 py-1 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500;
+          }
+          .input-profile:disabled {
+            @apply text-gray-500 dark:text-gray-400 bg-transparent cursor-not-allowed;
+          }
+        `}</style>
       </Layout>
 
-      <ChangePasswordModal
-        isOpen={isPasswordModalOpen}
-        onClose={() => setIsPasswordModalOpen(false)}
-      />
-      <Manage2FAModal
-        isOpen={is2FAModalOpen}
-        onClose={() => setIs2FAModalOpen(false)}
-      />
+      <ChangePasswordModal isOpen={isPasswordModalOpen} onClose={() => setIsPasswordModalOpen(false)} />
+      <Manage2FAModal isOpen={is2FAModalOpen} onClose={() => setIs2FAModalOpen(false)} />
     </>
   );
 };

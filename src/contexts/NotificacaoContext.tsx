@@ -15,7 +15,7 @@ const NotificacaoContext = createContext<NotificationContextType | undefined>(un
 export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [notifications, setNotifications] = useState<NotificationDTO[]>([]);
     const [loading, setLoading] = useState(true);
-    const { usuario, carregando: authCarregando } = useAuth();
+    const { usuario, carregando: authCarregando } = useAuth(); 
 
     const hasAdminRole = useMemo(() => {
         if (!usuario) return false;
@@ -30,7 +30,16 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         if (usuario && hasAdminRole) {
             setLoading(true);
             try {
-                const dados = await relatorioService.getNotificacoes();
+                let dados = await relatorioService.getNotificacoes();
+
+                if (usuario.permissao === 'gerente') {
+                    dados = dados.filter(notif =>
+                        notif.tipo !== 'ESTOQUE_BAIXO' &&
+                        notif.tipo !== 'PRODUTO_VENCIDO' &&
+                        notif.tipo !== 'PERTO_VENCIMENTO'
+                    );
+                }
+
                 setNotifications(dados);
             } catch (error) {
                 console.error("Erro ao buscar notificações:", error);

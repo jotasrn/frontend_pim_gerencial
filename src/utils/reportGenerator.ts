@@ -1,7 +1,11 @@
 import jsPDF from 'jspdf';
 import autoTable, { UserOptions, FontStyle, HAlignType } from 'jspdf-autotable';
-import { Perda, Venda } from '../types';
+// 1. CORREÇÃO: Adicionados os tipos que faltavam
+import { Perda, Venda, VendasCategoriaData, TopProdutosData, Produto } from '../types';
 import { formatDateTime, formatDate, formatCurrency } from './apiHelpers';
+import * as XLSX from 'xlsx';
+// 2. CORREÇÃO: Importar o showToast
+import { showToast } from '../components/Toast';
 
 declare module 'jspdf' {
     interface jsPDF {
@@ -40,18 +44,18 @@ export const generatePerdaReport = (
     const totalPerdido = perdasFiltradas.reduce((sum, p) => sum + p.quantidade, 0);
 
     const tfoot = [
-    [{
-        content: 'Total de Itens Perdidos:',
-        colSpan: 2,
-        styles: { fontStyle: 'bold' as FontStyle, halign: 'right' as HAlignType }
-    },
+        [{
+            content: 'Total de Itens Perdidos:',
+            colSpan: 2,
+            styles: { fontStyle: 'bold' as FontStyle, halign: 'right' as HAlignType }
+        },
 
-    {
-        content: totalPerdido,
-        styles: { fontStyle: 'bold' as FontStyle }
-    },
-    { content: '', colSpan: 2 }],
-];
+        {
+            content: totalPerdido,
+            styles: { fontStyle: 'bold' as FontStyle }
+        },
+        { content: '', colSpan: 2 }],
+    ];
 
 
     autoTable(doc, {
@@ -100,7 +104,8 @@ export const generateVendasReport = (vendas: Venda[], periodo: string) => {
         valorTotalPeriodo += venda.valorTotal;
     });
 
-    doc.autoTable({
+    // 3. CORREÇÃO: Mudar de doc.autoTable(...) para autoTable(doc, ...)
+    autoTable(doc, {
         startY: 40,
         head: [tableColumn],
         body: tableRows,
@@ -116,4 +121,62 @@ export const generateVendasReport = (vendas: Venda[], periodo: string) => {
     doc.text(formatCurrency(valorTotalPeriodo), 200, finalY + 15, { align: 'right' });
 
     doc.save(`Relatorio_Vendas_${periodo}.pdf`);
+};
+
+export const generateDashboardExcelReport = (
+    vendasData: Venda[],
+    vendasCatData: VendasCategoriaData[],
+    topProdData: TopProdutosData[],
+    perdasData: Perda[],
+    produtosData: Produto[]
+) => {
+    try {
+        const wsVendasCat = XLSX.utils.json_to_sheet(vendasCatData.map(item => ({
+            Categoria: item.categoria,
+            'Total Vendido (R$)': item.totalVendido,
+        })));
+
+        const wsTopProd = XLSX.utils.json_to_sheet(topProdData.map(item => ({
+            Produto: item.nomeProduto,
+            'Unidades Vendidas': item.totalVendido,
+        })));
+
+        const wsPerdas = XLSX.utils.json_to_sheet(perdasData.map(p => ({
+            Produto: p.produto?.nome || `ID ${p.produtoId}`,
+            Quantidade: p.quantidade,
+            Motivo: p.motivo || 'N/A',
+            Data: formatDate(p.dataPerda),
+        })));
+
+        const wsProdutos = XLSX.utils.json_to_sheet(produtosData.map(p => ({
+            Produto: p.nome,
+            Categoria: p.categoria?.nome || 'N/A',
+            Estoque: p.estoque?.quantidadeAtual || 0,
+            Status: p.ativo ? 'Ativo' : 'Inativo',
+            'Data Vencimento': p.dataValidade ? formatDate(p.dataValidade) : 'N/A',
+        })));
+
+        const wsVendas = XLSX.utils.json_to_sheet(vendasData.map(v => ({
+            'ID Pedido': v.id,
+            Cliente: v.cliente?.nomeCompleto || 'N/A',
+            Data: formatDateTime(v.dataHora),
+            Status: v.statusPedido,
+            Pagamento: v.formaPagamento,
+            'Valor (R$)': v.valorTotal,
+        })));
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, wsVendas, 'Vendas Detalhadas');
+        XLSX.utils.book_append_sheet(wb, wsPerdas, 'Perdas Detalhadas');
+        XLSX.utils.book_append_sheet(wb, wsProdutos, 'Status Produtos');
+        XLSX.utils.book_append_sheet(wb, wsVendasCat, 'Vendas por Categoria');
+        XLSX.utils.book_append_sheet(wb, wsTopProd, 'Top Produtos');
+
+        const dataGeracao = new Date().toISOString().split('T')[0];
+        XLSX.writeFile(wb, `Relatorio_Gerencial_Completo_${dataGeracao}.xlsx`);
+
+    } catch (error) {
+        console.error("Erro ao gerar relatório Excel:", error);
+        showToast.error("Não foi possível gerar o relatório Excel.");
+    }
 };

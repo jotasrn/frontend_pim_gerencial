@@ -19,21 +19,13 @@ const ChangePasswordModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const newErrors: Partial<typeof formData> = {};
-
-        if (!formData.senhaAtual) {
-            newErrors.senhaAtual = 'A senha atual é obrigatória.';
-        }
-        if (formData.novaSenha.length < 6) {
-            newErrors.novaSenha = 'A nova senha deve ter no mínimo 6 caracteres.';
-        }
-        if (formData.novaSenha !== formData.confirmarSenha) {
-            newErrors.confirmarSenha = 'As senhas não coincidem.';
-        }
+        if (!formData.senhaAtual) newErrors.senhaAtual = 'A senha atual é obrigatória.';
+        if (formData.novaSenha.length < 6) newErrors.novaSenha = 'A nova senha deve ter no mínimo 6 caracteres.';
+        if (formData.novaSenha !== formData.confirmarSenha) newErrors.confirmarSenha = 'As senhas não coincidem.';
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
             return;
         }
-
         setIsLoading(true);
         setErrors({});
         setTimeout(() => {
@@ -54,54 +46,94 @@ const ChangePasswordModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
                         <Lock className="w-5 h-5 text-gray-500 dark:text-gray-400 mr-2" />
                         Alterar Senha
                     </h3>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none" disabled={isLoading}>
+                    <button
+                        onClick={onClose}
+                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none"
+                        disabled={isLoading}
+                    >
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
                     <div>
-                        <label htmlFor="senhaAtual" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Senha Atual</label>
+                        <label htmlFor="senhaAtual" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Senha Atual
+                        </label>
                         <input
-                            id="senhaAtual" type="password" value={formData.senhaAtual}
+                            id="senhaAtual"
+                            type="password"
+                            value={formData.senhaAtual}
                             onChange={(e) => setFormData(p => ({ ...p, senhaAtual: e.target.value }))}
-                            className={`input ${errors.senhaAtual ? 'input-error' : ''}`} disabled={isLoading}
+                            className={`input ${errors.senhaAtual ? 'input-error' : ''}`}
+                            disabled={isLoading}
                         />
                         {errors.senhaAtual && <p className="text-red-500 text-xs mt-1">{errors.senhaAtual}</p>}
                     </div>
+
                     <div>
-                        <label htmlFor="novaSenha" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nova Senha</label>
+                        <label htmlFor="novaSenha" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Nova Senha
+                        </label>
                         <input
-                            id="novaSenha" type="password" value={formData.novaSenha}
+                            id="novaSenha"
+                            type="password"
+                            value={formData.novaSenha}
                             onChange={(e) => setFormData(p => ({ ...p, novaSenha: e.target.value }))}
-                            className={`input ${errors.novaSenha ? 'input-error' : ''}`} disabled={isLoading}
+                            className={`input ${errors.novaSenha ? 'input-error' : ''}`}
+                            disabled={isLoading}
                         />
                         {errors.novaSenha && <p className="text-red-500 text-xs mt-1">{errors.novaSenha}</p>}
                     </div>
+
                     <div>
-                        <label htmlFor="confirmarSenha" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirmar Nova Senha</label>
+                        <label htmlFor="confirmarSenha" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Confirmar Nova Senha
+                        </label>
                         <input
-                            id="confirmarSenha" type="password" value={formData.confirmarSenha}
+                            id="confirmarSenha"
+                            type="password"
+                            value={formData.confirmarSenha}
                             onChange={(e) => setFormData(p => ({ ...p, confirmarSenha: e.target.value }))}
-                            className={`input ${errors.confirmarSenha ? 'input-error' : ''}`} disabled={isLoading}
+                            className={`input ${errors.confirmarSenha ? 'input-error' : ''}`}
+                            disabled={isLoading}
                         />
                         {errors.confirmarSenha && <p className="text-red-500 text-xs mt-1">{errors.confirmarSenha}</p>}
                     </div>
 
                     <div className="flex justify-end space-x-3 pt-4 border-t dark:border-gray-700">
-                        <button type="button" onClick={onClose} className="btn btn-outline border-gray-300 dark:border-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700" disabled={isLoading}>
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            disabled={isLoading}
+                            className="rounded-full border border-gray-300 dark:border-gray-600 dark:text-gray-300 
+                                       hover:bg-gray-50 dark:hover:bg-gray-700 px-5 py-2.5 font-medium 
+                                       transition-all shadow-sm disabled:opacity-50"
+                        >
                             Cancelar
                         </button>
-                        <button type="submit" className="btn bg-green-600 text-white hover:bg-green-700 flex items-center gap-2" disabled={isLoading}>
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="rounded-full bg-green-600 text-white hover:bg-green-700 
+                                       flex items-center gap-2 px-5 py-2.5 font-medium transition-all 
+                                       shadow-sm disabled:opacity-50"
+                        >
                             {isLoading ? (
                                 <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    <path
+                                        className="opacity-75"
+                                        fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 
+                                           5.291A7.962 7.962 0 014 12H0c0 
+                                           3.042 1.135 5.824 3 7.938l3-2.647z"
+                                    ></path>
                                 </svg>
                             ) : (
                                 <Save className="w-4 h-4" />
                             )}
-                            {isLoading ? 'Salvando...' : 'Salvar Nova Senha'}
+                            {isLoading ? 'Salvando...' : 'Salvar'}
                         </button>
                     </div>
                 </form>

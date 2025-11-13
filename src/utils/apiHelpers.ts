@@ -1,13 +1,11 @@
 import axios, { AxiosError } from 'axios';
 
-// --- Interfaces e Tipos ---
 
 interface ApiErrorData {
   message?: string;
   error?: string;
 }
 
-// --- Funções Utilitárias ---
 
 export const formatApiError = (error: unknown): string => {
   if (axios.isAxiosError(error)) {
@@ -87,8 +85,6 @@ export const validarCNPJ = (cnpj: string): boolean => {
   if (cleanCnpj.length !== 14) return false;
   if (/^(\d)\1+$/.test(cleanCnpj)) return false;
   
-  // A lógica de validação do CNPJ continua a mesma
-  // ...
   return true;
 };
 

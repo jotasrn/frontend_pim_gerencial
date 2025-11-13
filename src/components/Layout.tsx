@@ -1,6 +1,7 @@
 import React, { ReactNode, useState } from 'react';
 import { NavLink, useNavigate, Link } from 'react-router-dom';
-import { Leaf, Users, Tag, BarChart2, User, LogOut, Bell, LayoutGrid, Clock, UserCircle, Truck, HelpCircle, BookOpen, Package, Menu, X, Archive, ShoppingCart } from 'lucide-react';
+// 1. IMPORTAR PieChart
+import { Leaf, Users, Tag, BarChart2, User, LogOut, Bell, LayoutGrid, Clock, UserCircle, Truck, HelpCircle, BookOpen, Package, Menu, X, Archive, ShoppingCart, PieChart } from 'lucide-react';
 import { useAuth, TipoUsuario } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificacaoContext';
 import NotificationModal from './modals/NotificacaoModal';
@@ -31,7 +32,8 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
       case 'gerente':
         return [
           { nome: 'Dashboard', icone: <BarChart2 size={20} />, path: '/gerente', end: true },
-          { nome: 'Historico Vendas', icone: <ShoppingCart size={20} />, path: '/gerente/vendas' },
+          { nome: 'Vendas', icone: <ShoppingCart size={20} />, path: '/gerente/vendas' },
+          { nome: 'Relatórios', icone: <PieChart size={20} />, path: '/gerente/relatorios' }, // 2. ADICIONAR ITEM
           { nome: 'Usuários', icone: <Users size={20} />, path: '/gerente/usuarios' },
           { nome: 'Promoções', icone: <Tag size={20} />, path: '/gerente/promocoes' },
           { nome: 'Clientes', icone: <User size={20} />, path: '/gerente/clientes' },

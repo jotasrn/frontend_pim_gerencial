@@ -8,6 +8,7 @@ export interface Usuario {
   nomeCompleto: string;
   email: string;
   permissao: TipoUsuario;
+  is2faEnabled?: boolean;
 }
 
 interface TipoAuthContext {
