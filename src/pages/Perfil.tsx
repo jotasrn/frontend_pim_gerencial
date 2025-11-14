@@ -3,16 +3,15 @@ import Layout from '../components/Layout';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/TemaContext';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { 
-  UserCircle, Mail, ShieldCheck, Car, ClipboardIcon, 
-  Save, X, Edit, AlertCircle, Moon, Sun 
+import {
+  UserCircle, Mail, ShieldCheck, Car, ClipboardIcon,
+  Save, X, Edit, AlertCircle, Moon, Sun
 } from 'lucide-react';
 import { entregadorService, EntregadorPerfilUpdateDTO } from '../services/entregadorService';
 import { usuarioService } from '../services/usuarioService';
 import { showToast } from '../components/Toast';
 import { Usuario } from '../types';
 import ChangePasswordModal from '../components/modals/AlterarSenhaModal';
-import Manage2FAModal from '../components/modals/Ativar2FAModal';
 
 const UserProfile: React.FC = () => {
   const { usuario, carregando: carregandoAuth } = useAuth();
@@ -30,7 +29,6 @@ const UserProfile: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [is2FAModalOpen, setIs2FAModalOpen] = useState(false);
 
   const carregarDadosPerfil = useCallback(async () => {
     if (!usuario) {
@@ -232,12 +230,15 @@ const UserProfile: React.FC = () => {
                 Cancelar
               </button>
               <button type="submit" disabled={isLoading} className="btn-green">
-                {isLoading ? 'Salvando...' : (
-                  <>
-                    <Save className="w-4 h-4" />
-                    Salvar Alterações
-                  </>
+                {isLoading ? (
+                  <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                ) : (
+                  <Save className="w-4 h-4" />
                 )}
+                {isLoading ? 'Salvando...' : 'Salvar Alterações'}
               </button>
             </div>
           )}
@@ -251,7 +252,13 @@ const UserProfile: React.FC = () => {
                     Tema atual: {theme === 'dark' ? 'Escuro' : 'Claro'}
                   </span>
                   <button type="button" onClick={toggleTheme} className="btn-gray flex items-center gap-2">
-                    {theme === 'dark' ? <><Sun className="w-4 h-4 text-yellow-400" /> Modo Claro</> : <><Moon className="w-4 h-4" /> Modo Escuro</>}
+                    {theme === 'dark'
+                      ? <Sun className="w-4 h-4 text-yellow-400" />
+                      : <Moon className="w-4 h-4" />
+                    }
+                    <span>
+                      {theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
+                    </span>
                   </button>
                 </div>
               </div>
@@ -262,39 +269,14 @@ const UserProfile: React.FC = () => {
                   <button type="button" onClick={() => setIsPasswordModalOpen(true)} className="btn-gray">
                     Alterar Senha
                   </button>
-                  <button type="button" onClick={() => setIs2FAModalOpen(true)} className="btn-gray">
-                    Gerenciar 2FA
-                  </button>
                 </div>
               </div>
             </>
           )}
         </form>
-
-        <style>{`
-          .btn-green {
-            @apply inline-flex items-center gap-2 bg-green-600 text-white font-medium px-4 py-2 rounded-md shadow hover:bg-green-700 transition disabled:opacity-70;
-          }
-          .btn-blue {
-            @apply inline-flex items-center gap-2 bg-blue-600 text-white font-medium px-3 py-1.5 rounded-md shadow hover:bg-blue-700 transition disabled:opacity-70;
-          }
-          .btn-gray {
-            @apply inline-flex items-center gap-2 bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-medium px-3 py-1.5 rounded-md shadow hover:bg-gray-400 dark:hover:bg-gray-600 transition disabled:opacity-70;
-          }
-          .input-profile {
-            @apply text-sm text-gray-800 dark:text-gray-100 flex-1 bg-transparent rounded-md;
-          }
-          .input-profile:not(:disabled) {
-            @apply px-2 py-1 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500;
-          }
-          .input-profile:disabled {
-            @apply text-gray-500 dark:text-gray-400 bg-transparent cursor-not-allowed;
-          }
-        `}</style>
       </Layout>
 
       <ChangePasswordModal isOpen={isPasswordModalOpen} onClose={() => setIsPasswordModalOpen(false)} />
-      <Manage2FAModal isOpen={is2FAModalOpen} onClose={() => setIs2FAModalOpen(false)} />
     </>
   );
 };

@@ -9,7 +9,6 @@ export interface Usuario {
   permissao: TipoUsuario;
   ativo?: boolean;
   googleId?: string;
-  is2faEnabled?: boolean;
   tipoVeiculo?: string;
   placaVeiculo?: string;
 }

@@ -79,7 +79,7 @@ const NotificacaoModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
                                             </span>
                                             <Link
                                                 to={notif.link || '#'}
-                                                onClick={handleLinkClick} // Corrigido
+                                                onClick={handleLinkClick} 
                                                 className="text-xs text-blue-600 dark:text-blue-400 hover:underline ml-2 flex-shrink-0"
                                             >
                                                 Ver
