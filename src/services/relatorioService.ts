@@ -7,17 +7,15 @@ import {
   EstoqueCriticoData,
   Venda,
   FiltrosRelatorios,
-  NotificationDTO, // Adicionado
+  NotificationDTO, 
 } from '../types';
-import axios, { AxiosError } from 'axios'; // Adicionado
+import axios, { AxiosError } from 'axios'; 
 
-// Adicionado: Interface para Erros da API
 interface ApiErrorResponse {
   message?: string;
   error?: string;
 }
 
-// Adicionado: Função para tratar erros
 const handleError = (error: unknown, defaultMessage: string): string => {
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError<ApiErrorResponse>;
@@ -29,7 +27,6 @@ const handleError = (error: unknown, defaultMessage: string): string => {
 };
 
 export const relatorioService = {
-  // Adicionado: Função para buscar notificações
   getNotificacoes: async (): Promise<NotificationDTO[]> => {
     try {
       const response = await api.get<NotificationDTO[]>('/relatorios/notificacoes');

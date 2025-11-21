@@ -15,7 +15,6 @@ interface UsePromocoesReturn {
   atualizarFiltros: (novosFiltros: Partial<FiltrosPromocoes>) => void;
 }
 
-// Função para verificar se a data de fim já passou
 const isExpired = (dataFim: string): boolean => {
   const today = new Date();
   const endDate = new Date(dataFim);
@@ -32,7 +31,7 @@ export const usePromocoes = (filtrosIniciais: FiltrosPromocoes = filtrosPadrao):
   const [filtros, setFiltros] = useState<FiltrosPromocoes>(filtrosIniciais);
 
   const { refetchNotifications } = useNotifications();
-  const filtrosString = JSON.stringify(filtros); // Dependência estável
+  const filtrosString = JSON.stringify(filtros);
 
   const carregarPromocoes = useCallback(async () => {
     setLoading(true);
@@ -52,7 +51,7 @@ export const usePromocoes = (filtrosIniciais: FiltrosPromocoes = filtrosPadrao):
       if (deactivationPromises.length > 0) {
         await Promise.all(deactivationPromises);
         showToast.info(`${deactivationPromises.length} promoção(ões) expiradas foram desativadas.`);
-        refetchNotifications(); // Atualiza o sino
+        refetchNotifications(); 
       }
 
       setPromocoes(dados);
@@ -63,7 +62,7 @@ export const usePromocoes = (filtrosIniciais: FiltrosPromocoes = filtrosPadrao):
     } finally {
       setLoading(false);
     }
-  }, [filtrosString, refetchNotifications, filtros]); // Correção do Linter
+  }, [filtrosString, refetchNotifications, filtros]); 
 
   const criarPromocao = async (formData: FormData): Promise<boolean> => {
     setError(null);
@@ -109,8 +108,6 @@ export const usePromocoes = (filtrosIniciais: FiltrosPromocoes = filtrosPadrao):
       return false;
     }
   };
-
-  // FUNÇÃO 'associarProduto' REMOVIDA
 
   const atualizarFiltros = useCallback((novosFiltros: Partial<FiltrosPromocoes>) => {
     setFiltros(prev => ({ ...prev, ...novosFiltros }));

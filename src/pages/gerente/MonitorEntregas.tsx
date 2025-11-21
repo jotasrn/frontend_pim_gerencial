@@ -26,7 +26,7 @@ const KpiCard: React.FC<{ title: string; value: string | number; icon: React.Rea
     </div>
 );
 
-// Componente para o Item do Acordeão (Entregador)
+// Componente para o Item do Acordeão 
 const EntregadorItem: React.FC<{ data: EntregadorAgrupado }> = ({ data }) => {
     const [isOpen, setIsOpen] = useState(false);
 

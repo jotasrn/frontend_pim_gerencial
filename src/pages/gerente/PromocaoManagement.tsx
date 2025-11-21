@@ -97,7 +97,6 @@ const PromotionManagement: React.FC = () => {
     if (modalAction === 'deactivate') {
       success = await desativarPromocao(promotionToConfirm.id);
     } else {
-      // Reativar abrindo o formulário de edição
       handleOpenEditForm(promotionToConfirm);
       success = true;
     }

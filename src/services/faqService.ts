@@ -1,7 +1,7 @@
 import api from './api';
 import { Faq } from '../types';
 import axios, { AxiosError } from 'axios';
-import { showToast } from '../components/Toast'; // <-- ADICIONADO AQUI
+import { showToast } from '../components/Toast'
 
 type FaqData = Omit<Faq, 'id' | 'createdAt' | 'updatedAt'>;
 

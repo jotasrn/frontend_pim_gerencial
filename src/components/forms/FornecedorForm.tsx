@@ -13,6 +13,31 @@ interface FornecedorFormProps {
   isEditing?: boolean;
 }
 
+const formatCNPJ = (value: string) => {
+  return value
+    .replace(/\D/g, '') 
+    .replace(/^(\d{2})(\d)/, '$1.$2') 
+    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3') 
+    .replace(/\.(\d{3})(\d)/, '.$1/$2') 
+    .replace(/(\d{4})(\d)/, '$1-$2') 
+    .substring(0, 18); 
+};
+
+const formatTelefone = (value: string) => {
+  const cleaned = value.replace(/\D/g, '');
+  if (cleaned.length <= 10) {
+    return cleaned
+      .replace(/^(\d{2})(\d)/, '($1) $2')
+      .replace(/(\d{4})(\d)/, '$1-$2')
+      .substring(0, 14);
+  } else {
+    return cleaned
+      .replace(/^(\d{2})(\d)/, '($1) $2')
+      .replace(/(\d{5})(\d)/, '$1-$2')
+      .substring(0, 15);
+  }
+};
+
 const FornecedorForm: React.FC<FornecedorFormProps> = ({
   isOpen,
   onClose,
@@ -38,9 +63,9 @@ const FornecedorForm: React.FC<FornecedorFormProps> = ({
       if (isEditing && initialData) {
         setFormData({
           nome: initialData.nome || '',
-          cnpj: initialData.cnpj || '',
+          cnpj: formatCNPJ(initialData.cnpj || ''),
           email: initialData.email || '',
-          telefone: initialData.telefone || '',
+          telefone: formatTelefone(initialData.telefone || ''),
           ativo: initialData.ativo ?? true,
         });
         setIsInactive(!initialData.ativo);
@@ -53,7 +78,16 @@ const FornecedorForm: React.FC<FornecedorFormProps> = ({
   }, [initialData, isEditing, isOpen, initialFormState]);
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    let formattedValue = value;
+
+    if (field === 'cnpj') {
+      formattedValue = formatCNPJ(value);
+    } else if (field === 'telefone') {
+      formattedValue = formatTelefone(value);
+    }
+
+    setFormData(prev => ({ ...prev, [field]: formattedValue }));
+    
     if (errors[field as keyof typeof errors]) {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -81,9 +115,9 @@ const FornecedorForm: React.FC<FornecedorFormProps> = ({
     try {
       const dataParaEnviar: FornecedorData = {
         nome: formData.nome,
-        cnpj: formData.cnpj,
+        cnpj: formData.cnpj.replace(/\D/g, ''), 
         email: formData.email,
-        telefone: formData.telefone,
+        telefone: formData.telefone.replace(/\D/g, ''), 
         ativo: true,
       };
       await onSubmit(dataParaEnviar);
@@ -129,7 +163,9 @@ const FornecedorForm: React.FC<FornecedorFormProps> = ({
             <input
               id="fornecedor-cnpj" type="text" value={formData.cnpj}
               onChange={(e) => handleInputChange('cnpj', e.target.value)}
-              className="input" placeholder="00.000.000/0001-00"
+              className="input"
+              placeholder="00.000.000/0001-00"
+              maxLength={18} 
               disabled={loading}
             />
           </div>
@@ -140,7 +176,8 @@ const FornecedorForm: React.FC<FornecedorFormProps> = ({
             <input
               id="fornecedor-email" type="email" value={formData.email}
               onChange={(e) => handleInputChange('email', e.target.value)}
-              className="input" placeholder="contato@fornecedor.com"
+              className="input"
+              placeholder="contato@fornecedor.com"
               disabled={loading}
             />
           </div>
@@ -149,8 +186,11 @@ const FornecedorForm: React.FC<FornecedorFormProps> = ({
               <Phone className="w-4 h-4 inline mr-1 text-gray-500" /> Telefone
             </label>
             <input
-              id="fornecedor-telefone" type="tel" value={formData.telefone} onChange={(e) => handleInputChange('telefone', e.target.value)}
-              className="input" placeholder="(61) 99999-8888"
+              id="fornecedor-telefone" type="tel" value={formData.telefone}
+              onChange={(e) => handleInputChange('telefone', e.target.value)}
+              className="input"
+              placeholder="(61) 99999-8888"
+              maxLength={15} 
               disabled={loading}
             />
           </div>

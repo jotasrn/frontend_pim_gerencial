@@ -15,7 +15,7 @@ const NotificacaoContext = createContext<NotificationContextType | undefined>(un
 export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [notifications, setNotifications] = useState<NotificationDTO[]>([]);
     const [loading, setLoading] = useState(true);
-    const { usuario, carregando: authCarregando } = useAuth(); 
+    const { usuario, carregando: authCarregando } = useAuth();
 
     const hasAdminRole = useMemo(() => {
         if (!usuario) return false;
@@ -32,11 +32,19 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
             try {
                 let dados = await relatorioService.getNotificacoes();
 
+
                 if (usuario.permissao === 'gerente') {
                     dados = dados.filter(notif =>
-                        notif.tipo !== 'ESTOQUE_BAIXO' &&
-                        notif.tipo !== 'PRODUTO_VENCIDO' &&
-                        notif.tipo !== 'PERTO_VENCIMENTO'
+                        notif.tipo === 'PERDA_ALTA' ||
+                        notif.tipo === 'DUVIDA_PENDENTE' ||
+                        notif.tipo === 'VENDA_RECORDE'
+                    );
+                } else if (usuario.permissao === 'estoquista') {
+                    dados = dados.filter(notif =>
+                        notif.tipo === 'ESTOQUE_BAIXO' ||
+                        notif.tipo === 'PRODUTO_VENCIDO' ||
+                        notif.tipo === 'PERTO_VENCIMENTO' ||
+                        notif.tipo === 'PERDA_ALTA'
                     );
                 }
 
@@ -55,6 +63,9 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
     useEffect(() => {
         fetchNotifications();
+
+        const interval = setInterval(fetchNotifications, 5 * 60 * 1000);
+        return () => clearInterval(interval);
     }, [fetchNotifications]);
 
     const totalNotifications = useMemo(() => {

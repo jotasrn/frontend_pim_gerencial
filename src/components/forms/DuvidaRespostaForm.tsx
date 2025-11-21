@@ -9,8 +9,8 @@ interface ModalProps {
   onClose: () => void;
   onSubmit: (id: number, data: DuvidaRespostaRequest) => Promise<boolean>;
   duvida: Duvida | null;
-  sugestao: string; // Nova prop
-  loadingSugestao: boolean; // Nova prop
+  sugestao: string; 
+  loadingSugestao: boolean; 
 }
 
 const DuvidaRespostaForm: React.FC<ModalProps> = ({
@@ -25,7 +25,6 @@ const DuvidaRespostaForm: React.FC<ModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // Preenche o textarea quando a sugestão da IA terminar de carregar
     if (sugestao && !loadingSugestao) {
       setResposta(sugestao);
     }

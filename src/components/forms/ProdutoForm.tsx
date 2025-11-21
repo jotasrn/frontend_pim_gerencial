@@ -379,8 +379,9 @@ const ProductForm: React.FC<ProductFormProps> = ({
   const availableSuppliers = useMemo(() => {
     return fornecedores.filter(f =>
       !formData.fornecedorIds.includes(f.id) &&
-      (f.nome.toLowerCase().includes(supplierSearchTerm.toLowerCase()) ||
-        (f.cnpj && f.cnpj.includes(supplierSearchTerm)))
+      (supplierSearchTerm === '' || // Permite termo vazio para mostrar todos quando necessário
+       f.nome.toLowerCase().includes(supplierSearchTerm.toLowerCase()) ||
+       (f.cnpj && f.cnpj.includes(supplierSearchTerm)))
     );
   }, [fornecedores, supplierSearchTerm, formData.fornecedorIds]);
 
@@ -618,7 +619,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
                         disabled={loadingFornecedores || loading}
                       />
 
-                      {supplierSearchTerm.length > 0 && (
+                      {(supplierSearchTerm.length > 0 || formData.fornecedorIds.length === 0) && (
                         <div className="border border-gray-300 dark:border-gray-600 rounded-md max-h-40 overflow-y-auto">
                           {availableSuppliers.length === 0 ? (
                             <p className="p-3 text-sm text-gray-500 dark:text-gray-400 text-center">Nenhum fornecedor encontrado.</p>

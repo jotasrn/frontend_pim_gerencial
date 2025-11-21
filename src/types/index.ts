@@ -251,6 +251,9 @@ export interface Duvida {
   status: string;
   createdAt: string;
   updatedAt: string;
+  resposta?: string;
+  dataResposta?: string;
+  respondente?: Usuario;
 }
 
 export interface DuvidaResposta {

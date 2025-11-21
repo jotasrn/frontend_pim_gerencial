@@ -1,8 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import { produtoService } from '../services/produtoService';
+import { perdaService } from '../services/perdaService'; 
 import { showToast } from '../components/Toast';
 import { Produto, FiltrosProdutos } from '../types';
 import { useNotifications } from '../contexts/NotificacaoContext';
+
+export const isExpired = (dateString?: string): boolean => {
+  if (!dateString) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const expiryDate = new Date(dateString);
+  return expiryDate < today;
+};
 
 interface UseProdutosReturn {
   produtos: Produto[];
@@ -13,6 +22,7 @@ interface UseProdutosReturn {
   criarProduto: (formData: FormData) => Promise<boolean>;
   atualizarProduto: (id: number, formData: FormData) => Promise<boolean>;
   desativarProduto: (id: number) => Promise<boolean>;
+  ativarProduto: (produto: Produto) => Promise<boolean>;
   atualizarFiltros: (novosFiltros: Partial<FiltrosProdutos>) => void;
 }
 
@@ -23,7 +33,6 @@ export const useProdutos = (filtrosIniciais: FiltrosProdutos = {}): UseProdutosR
   const [filtros, setFiltros] = useState<FiltrosProdutos>(filtrosIniciais);
 
   const { refetchNotifications } = useNotifications();
-  const filtrosString = JSON.stringify(filtros);
 
   const carregarProdutos = useCallback(async () => {
     setLoading(true);
@@ -31,23 +40,43 @@ export const useProdutos = (filtrosIniciais: FiltrosProdutos = {}): UseProdutosR
     try {
       const dados = await produtoService.listar(filtros);
 
-      const deactivationPromises: Promise<void>[] = [];
-      let lowStockAlertShown = false;
+      const updatesPromises: Promise<void>[] = [];
+      
+      for (const p of dados) {
+        const estoqueAtual = p.estoque?.quantidadeAtual || 0;
+        const vencido = isExpired(p.dataValidade);
+        const estoqueBaixo = estoqueAtual <= 5;
 
-      dados.forEach(p => {
-        const isLowStock = p.estoque && p.estoque.quantidadeAtual <= 5;
-        if (p.ativo && isLowStock) {
-          deactivationPromises.push(produtoService.desativar(p.id));
-          p.ativo = false;
-          if (!lowStockAlertShown) {
-            showToast.warning(`Produto "${p.nome}" foi desativado (estoque baixo).`);
-            lowStockAlertShown = true;
+        if (vencido && estoqueAtual > 0) {
+          console.log(`Produto ${p.nome} vencido. Registrando perda automática...`);
+          
+          updatesPromises.push(
+            perdaService.registrar({
+              produtoId: p.id,
+              quantidade: estoqueAtual,
+              motivo: 'VENCIMENTO (Automático)'
+            }).then(() => {
+               showToast.error(`Produto "${p.nome}" venceu! Perda de ${estoqueAtual} itens registrada automaticamente.`);
+            })
+          );
+          
+          if (p.ativo) {
+             updatesPromises.push(produtoService.desativar(p.id));
+             p.ativo = false; 
           }
+          if(p.estoque) p.estoque.quantidadeAtual = 0;
+          
+        } 
+        else if (estoqueBaixo && p.ativo && !vencido) { 
+           console.log(`Produto ${p.nome} com estoque baixo. Desativando...`);
+           updatesPromises.push(produtoService.desativar(p.id));
+           p.ativo = false;
+           showToast.warning(`Estoque baixo: Produto "${p.nome}" foi desativado.`);
         }
-      });
+      }
 
-      if (deactivationPromises.length > 0) {
-        await Promise.all(deactivationPromises);
+      if (updatesPromises.length > 0) {
+        await Promise.all(updatesPromises);
         refetchNotifications();
       }
 
@@ -59,7 +88,7 @@ export const useProdutos = (filtrosIniciais: FiltrosProdutos = {}): UseProdutosR
     } finally {
       setLoading(false);
     }
-  }, [filtrosString, refetchNotifications, filtros]);
+  }, [refetchNotifications, filtros]); 
 
   const criarProduto = async (formData: FormData): Promise<boolean> => {
     try {
@@ -92,13 +121,33 @@ export const useProdutos = (filtrosIniciais: FiltrosProdutos = {}): UseProdutosR
   const desativarProduto = async (id: number): Promise<boolean> => {
     try {
       await produtoService.desativar(id);
-      showToast.success('Status do produto alterado com sucesso!');
+      showToast.success('Produto desativado com sucesso!');
       refetchNotifications();
       return true;
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
       setError(errorMessage);
       showToast.error(`Erro ao alterar status do produto: ${errorMessage}`);
+      return false;
+    }
+  };
+
+  const ativarProduto = async (produto: Produto): Promise<boolean> => {
+    try {
+      const formData = new FormData();
+      const produtoAtualizado = { ...produto, ativo: true };
+      
+      formData.append('produto', JSON.stringify(produtoAtualizado));
+
+      await produtoService.atualizar(produto.id, formData);
+      
+      showToast.success('Produto ativado com sucesso!');
+      refetchNotifications();
+      return true;
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
+      setError(errorMessage);
+      showToast.error(`Erro ao ativar produto: ${errorMessage}`);
       return false;
     }
   };
@@ -120,6 +169,7 @@ export const useProdutos = (filtrosIniciais: FiltrosProdutos = {}): UseProdutosR
     criarProduto,
     atualizarProduto,
     desativarProduto,
+    ativarProduto, 
     atualizarFiltros,
   };
 };

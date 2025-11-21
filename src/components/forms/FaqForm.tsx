@@ -83,20 +83,20 @@ const FaqForm: React.FC<FaqFormProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold text-gray-800">
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between p-4 border-b dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             {isEditing ? 'Editar FAQ' : 'Adicionar FAQ'}
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 focus:outline-none" disabled={loading}>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 focus:outline-none" disabled={loading}>
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4">
           <div>
-            <label htmlFor="faq-categoria" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="faq-categoria" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Categoria *
             </label>
             <input
@@ -110,9 +110,9 @@ const FaqForm: React.FC<FaqFormProps> = ({
             />
             {errors.categoria && <p className="text-red-500 text-xs mt-1">{errors.categoria}</p>}
           </div>
-          
+
           <div>
-            <label htmlFor="faq-pergunta" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="faq-pergunta" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Pergunta *
             </label>
             <textarea
@@ -128,7 +128,7 @@ const FaqForm: React.FC<FaqFormProps> = ({
           </div>
 
           <div>
-            <label htmlFor="faq-resposta" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="faq-resposta" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Resposta *
             </label>
             <textarea
@@ -147,17 +147,17 @@ const FaqForm: React.FC<FaqFormProps> = ({
             <input
               type="checkbox" id="faq-ativo" checked={formData.ativo}
               onChange={(e) => handleInputChange('ativo', e.target.checked)}
-              className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-offset-0 focus:ring-2 focus:ring-green-500"
+              className="h-4 w-4 text-teal-600 border-gray-300 dark:border-gray-600 rounded focus:ring-offset-0 focus:ring-2 focus:ring-teal-500"
               disabled={loading}
             />
-            <label htmlFor="faq-ativo" className="ml-2 block text-sm text-gray-900 select-none">Ativo (visível para clientes)</label>
+            <label htmlFor="faq-ativo" className="ml-2 block text-sm text-gray-900 dark:text-gray-200 select-none">Ativo (visível para clientes)</label>
           </div>
 
-          <div className="flex justify-end space-x-3 pt-4 border-t">
+          <div className="flex justify-end space-x-3 pt-4 border-t dark:border-gray-700 mt-auto sticky bottom-0 bg-white dark:bg-gray-800 py-4 px-6 z-10">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none"
               disabled={loading}
             >
               Cancelar
@@ -165,7 +165,7 @@ const FaqForm: React.FC<FaqFormProps> = ({
             <button
               type="submit"
               disabled={loading}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none disabled:opacity-50"
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 focus:outline-none disabled:opacity-50"
             >
               {loading && (
                 <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
@@ -179,10 +179,10 @@ const FaqForm: React.FC<FaqFormProps> = ({
         </form>
       </div>
       <style>{`
-        .input { @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:cursor-not-allowed; }
-        .input-error { @apply border-red-500 focus:ring-red-500; }
-        .textarea { @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:cursor-not-allowed; }
-      `}</style>
+    .input { @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-100; }
+    .input-error { @apply border-red-500 focus:ring-red-500; }
+    .textarea { @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-100; }
+   `}</style>
     </div>
   );
 };

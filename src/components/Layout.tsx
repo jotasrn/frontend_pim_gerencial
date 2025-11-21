@@ -1,6 +1,5 @@
 import React, { ReactNode, useState } from 'react';
 import { NavLink, useNavigate, Link } from 'react-router-dom';
-// 1. Importar MapPin
 import {
   Leaf, Users, Tag, BarChart2, User, LogOut, Bell, LayoutGrid, Clock,
   UserCircle, Truck, HelpCircle, BookOpen, Package, Menu, X, Archive,
@@ -38,7 +37,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
           { nome: 'Dashboard', icone: <BarChart2 size={20} />, path: '/gerente', end: true },
           { nome: 'Vendas', icone: <ShoppingCart size={20} />, path: '/gerente/vendas' },
           { nome: 'Relatórios', icone: <PieChart size={20} />, path: '/gerente/relatorios' },
-          { nome: 'Monitor Entregas', icone: <MapPin size={20} />, path: '/gerente/entregas' }, // 2. ADICIONAR
+          { nome: 'Monitor Entregas', icone: <MapPin size={20} />, path: '/gerente/entregas' }, 
           { nome: 'Usuários', icone: <Users size={20} />, path: '/gerente/usuarios' },
           { nome: 'Promoções', icone: <Tag size={20} />, path: '/gerente/promocoes' },
           { nome: 'Clientes', icone: <User size={20} />, path: '/gerente/clientes' },

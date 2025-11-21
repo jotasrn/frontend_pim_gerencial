@@ -5,7 +5,7 @@ import { promocaoService } from '../services/promocaoService';
 import { entregaService } from '../services/entregaService';
 import { perdaService } from '../services/perdaService';
 import { produtoService } from '../services/produtoService';
-import { showToast } from '../components/Toast'; // Agora está sendo usado
+import { showToast } from '../components/Toast';
 import {
   Venda,
   VendasCategoriaData,
@@ -34,7 +34,7 @@ interface UseRelatoriosReturn {
   perdasPorMotivo: PerdasMotivoData[];
   niveisEstoque: NiveisEstoqueData[];
   estoqueCritico: EstoqueCriticoData | null;
-  vendasRecentes: Venda[]; // Adicionado de volta
+  vendasRecentes: Venda[];
   kpis: KpiData;
   loading: boolean;
   error: string | null;
@@ -46,7 +46,6 @@ const getTodayRange = () => {
   return { dataInicio: today, dataFim: today };
 };
 
-// Helper para datas padrão (últimos 7 dias)
 const getDefaultDateRange = () => {
   const endDate = new Date();
   const startDate = new Date();
@@ -66,7 +65,7 @@ export const useRelatorios = (): UseRelatoriosReturn => {
   const [perdasPorMotivo, setPerdasPorMotivo] = useState<PerdasMotivoData[]>([]);
   const [niveisEstoque, setNiveisEstoque] = useState<NiveisEstoqueData[]>([]);
   const [estoqueCritico, setEstoqueCritico] = useState<EstoqueCriticoData | null>(null);
-  const [vendasRecentes, setVendasRecentes] = useState<Venda[]>([]); // Adicionado de volta
+  const [vendasRecentes, setVendasRecentes] = useState<Venda[]>([]);
   const [kpis, setKpis] = useState<KpiData>({
     usuariosAtivos: 0,
     promocoesAtivas: 0,
@@ -76,7 +75,6 @@ export const useRelatorios = (): UseRelatoriosReturn => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Memoiza o valor padrão para estabilizar o useEffect
   const defaultDates = useMemo(() => getDefaultDateRange(), []);
 
   const carregarRelatorios = useCallback(async (filtros: FiltrosRelatorios) => {
@@ -92,9 +90,10 @@ export const useRelatorios = (): UseRelatoriosReturn => {
         estCritData,
         usuariosData,
         promocoesData,
-        entregasData,
+        entregasPendentesData,   
+        entregasAguardandoData,  
         pedidosHojeData,
-        recentSalesData, // Busca separada para vendas recentes (últimos 5)
+        recentSalesData,
       ] = await Promise.all([
         relatorioService.gerarRelatorioVendas(filtros),
         perdaService.listar(filtros),
@@ -102,25 +101,25 @@ export const useRelatorios = (): UseRelatoriosReturn => {
         relatorioService.gerarRelatorioEstoqueCritico(),
         usuarioService.listar(),
         promocaoService.listar({ ativa: true }),
-        entregaService.listar({ status: 'PENDENTE' }),
+        entregaService.listar({ status: 'PENDENTE' }),     
+        entregaService.listar({ status: 'AGUARDANDO_COLETA' }),
         relatorioService.gerarRelatorioVendas(todayRange),
-        relatorioService.gerarRelatorioVendas({ limite: 5 }), // Para o dashboard
+        relatorioService.gerarRelatorioVendas({ limite: 5 }),
       ]);
 
       setVendas(vendasData);
       setPerdas(perdasData);
       setProdutos(produtosData);
       setEstoqueCritico(estCritData);
-      setVendasRecentes(recentSalesData); // Define o estado de vendas recentes
+      setVendasRecentes(recentSalesData);
 
       setKpis({
         usuariosAtivos: usuariosData.filter(u => u.ativo).length,
         promocoesAtivas: promocoesData.length,
         pedidosHoje: pedidosHojeData.length,
-        entregasPendentes: entregasData.length,
+        entregasPendentes: entregasPendentesData.length + entregasAguardandoData.length,
       });
 
-      // --- Cálculos derivados (agora baseados nos dados filtrados) ---
       const catMap = new Map<string, number>();
       vendasData.forEach(v => {
         v.itens.forEach(item => {
@@ -162,14 +161,10 @@ export const useRelatorios = (): UseRelatoriosReturn => {
       let errorMessage = 'Erro desconhecido ao carregar relatórios.';
       if (err instanceof Error) {
         errorMessage = err.message || 'Erro ao carregar relatórios.';
-      } else if (typeof err === 'string') {
-        errorMessage = err;
       }
       setError(errorMessage);
-      showToast.error(errorMessage); // Erro 'showToast' não usado corrigido
-      console.error("Erro detalhado ao carregar relatórios:", err); // Erro 'err' não usado corrigido
-
-      // Define estados de erro
+      showToast.error(errorMessage);
+      
       setVendas([]);
       setPerdas([]);
       setProdutos([]);
@@ -183,11 +178,11 @@ export const useRelatorios = (): UseRelatoriosReturn => {
     } finally {
       setLoading(false);
     }
-  }, []); // useCallback vazio, chamado pelo useEffect ou manualmente
+  }, []);
 
   useEffect(() => {
-    carregarRelatorios(defaultDates); // Corrigido de 'filtrosIniciais' para 'defaultDates'
-  }, [carregarRelatorios, defaultDates]); // Corrigido de 'filtrosIniciais' para 'defaultDates'
+    carregarRelatorios(defaultDates);
+  }, [carregarRelatorios, defaultDates]);
 
   return {
     vendas,

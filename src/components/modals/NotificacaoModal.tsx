@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNotifications } from '../../contexts/NotificacaoContext';
-import { X, Bell, AlertCircle, Archive, Clock, TrendingDown } from 'lucide-react';
+import { X, Bell, AlertCircle, Archive, Clock, TrendingDown, MessageCircle, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface ModalProps {
@@ -18,6 +18,12 @@ const NotificationIcon: React.FC<{ tipo: string }> = ({ tipo }) => {
             return <Archive className="w-5 h-5 text-yellow-500" />;
         case 'PERDA_ALTA':
             return <TrendingDown className="w-5 h-5 text-red-700" />;
+
+        case 'DUVIDA_PENDENTE':
+            return <MessageCircle className="w-5 h-5 text-orange-500" />;
+        case 'VENDA_RECORDE':
+            return <TrendingUp className="w-5 h-5 text-green-600" />;
+
         default:
             return <Bell className="w-5 h-5 text-gray-500" />;
     }
@@ -33,6 +39,11 @@ const getTextColorClass = (tipo: string): string => {
             return "text-yellow-600 dark:text-yellow-500";
         case 'PERDA_ALTA':
             return "text-red-700 dark:text-red-500";
+        case 'DUVIDA_PENDENTE':
+            return "text-orange-600 dark:text-orange-400";
+        case 'VENDA_RECORDE':
+            return "text-green-600 dark:text-green-400";
+
         default:
             return "text-gray-700 dark:text-gray-300";
     }
@@ -68,7 +79,7 @@ const NotificacaoModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
                     ) : (
                         <ul className="divide-y divide-gray-200 dark:divide-gray-700">
                             {notifications.map((notif, index) => (
-                                <li key={notif.id || index} className="p-3 flex items-start space-x-3">
+                                <li key={notif.id || index} className="p-3 flex items-start space-x-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors rounded-md">
                                     <div className="flex-shrink-0 mt-1">
                                         <NotificationIcon tipo={notif.tipo} />
                                     </div>
@@ -79,7 +90,7 @@ const NotificacaoModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
                                             </span>
                                             <Link
                                                 to={notif.link || '#'}
-                                                onClick={handleLinkClick} 
+                                                onClick={handleLinkClick}
                                                 className="text-xs text-blue-600 dark:text-blue-400 hover:underline ml-2 flex-shrink-0"
                                             >
                                                 Ver

@@ -4,18 +4,11 @@ import { Plus, Edit, Trash2, Package, AlertCircle, AlertTriangle, DollarSign, Re
 import ProductForm from '../../components/forms/ProdutoForm';
 import ConfirmationModal from '../../components/modals/ConfirmacaoModal';
 import ProdutoDetailsModal from '../../components/modals/ProdutoDetailsModal';
-import { useProdutos } from '../../hooks/useProdutos';
+import { useProdutos, isExpired } from '../../hooks/useProdutos';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { formatCurrency, formatDate } from '../../utils/apiHelpers';
 import { Produto } from '../../types';
-
-const isExpired = (dateString?: string): boolean => {
-    if (!dateString) return false;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const expiryDate = new Date(dateString);
-    return expiryDate <= today;
-};
+import { showToast } from '../../components/Toast';
 
 const ProductManagement: React.FC = () => {
     const {
@@ -24,6 +17,7 @@ const ProductManagement: React.FC = () => {
         criarProduto,
         atualizarProduto,
         desativarProduto,
+        ativarProduto,
         carregarProdutos,
     } = useProdutos();
 
@@ -36,25 +30,10 @@ const ProductManagement: React.FC = () => {
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<Produto | null>(null);
 
-    const handleOpenCreateForm = () => {
-        setEditingProductId(null);
-        setIsFormOpen(true);
-    };
-
-    const handleOpenEditForm = (produto: Produto) => {
-        setEditingProductId(produto.id);
-        setIsFormOpen(true);
-    };
-
-    const handleOpenDetailsModal = (produto: Produto) => {
-        setSelectedProduct(produto);
-        setIsDetailsModalOpen(true);
-    };
-
-    const handleCloseDetailsModal = () => {
-        setIsDetailsModalOpen(false);
-        setSelectedProduct(null);
-    };
+    const handleOpenCreateForm = () => { setEditingProductId(null); setIsFormOpen(true); };
+    const handleOpenEditForm = (produto: Produto) => { setEditingProductId(produto.id); setIsFormOpen(true); };
+    const handleOpenDetailsModal = (produto: Produto) => { setSelectedProduct(produto); setIsDetailsModalOpen(true); };
+    const handleCloseDetailsModal = () => { setIsDetailsModalOpen(false); setSelectedProduct(null); };
 
     const handleFormSubmit = async (formData: FormData): Promise<boolean> => {
         let success = false;
@@ -93,20 +72,9 @@ const ProductManagement: React.FC = () => {
         }
     };
 
-    const handleCloseForm = () => {
-        setIsFormOpen(false);
-        setEditingProductId(null);
-    };
-
-    const handleCloseConfirmModal = () => {
-        setIsConfirmModalOpen(false);
-        setProductToDeactivate(null);
-        setIsDeactivatingLoading(false);
-    };
-
-    const stopPropagation = (e: React.MouseEvent) => {
-        e.stopPropagation();
-    };
+    const handleCloseForm = () => { setIsFormOpen(false); setEditingProductId(null); };
+    const handleCloseConfirmModal = () => { setIsConfirmModalOpen(false); setProductToDeactivate(null); setIsDeactivatingLoading(false); };
+    const stopPropagation = (e: React.MouseEvent) => { e.stopPropagation(); };
 
     useEffect(() => {
         const checkReload = () => {
@@ -120,11 +88,10 @@ const ProductManagement: React.FC = () => {
     }, [isFormOpen, carregarProdutos]);
 
     const renderEstoque = (produto: Produto, isMobile = false) => {
-        if (!produto.estoque) {
-            return <span className="text-gray-400 dark:text-gray-500">-</span>;
-        }
+        if (!produto.estoque) return <span className="text-gray-400 dark:text-gray-500">-</span>;
         const { quantidadeAtual, quantidadeMinima } = produto.estoque;
         const min = quantidadeMinima ?? 0;
+
         if (quantidadeAtual <= 5) {
             return (
                 <span className={`flex items-center text-red-600 dark:text-red-400 font-semibold ${isMobile ? 'text-xs' : 'text-sm'}`} title={`Estoque crítico! Mínimo: ${min}`}>
@@ -144,24 +111,32 @@ const ProductManagement: React.FC = () => {
         return <span className={`text-gray-900 dark:text-gray-100 ${isMobile ? 'text-xs' : 'text-sm'}`}>{isMobile ? 'Estoque:' : ''} {quantidadeAtual}</span>;
     };
 
-    const renderStatus = (product: Produto, lowStock: boolean) => {
-        const isActuallyActive = product.ativo && !lowStock;
+    const renderStatus = (product: Produto) => {
         return (
-            <span className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${isActuallyActive
+            <span className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${product.ativo
                 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100'
                 : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100'
                 }`}>
-                {isActuallyActive ? 'Ativo' : 'Inativo'}
+                {product.ativo ? 'Ativo' : 'Inativo'}
             </span>
         );
     };
 
-    const handleActionButtonClick = (e: React.MouseEvent, product: Produto, isActuallyActive: boolean, canReactivate: boolean) => {
+    const handleActionButtonClick = async (e: React.MouseEvent, product: Produto) => {
         e.stopPropagation();
-        if (isActuallyActive) {
+
+        const expired = isExpired(product.dataValidade);
+
+        if (product.ativo) {
             handleOpenDeactivateModal(product);
-        } else if (canReactivate) {
-            handleOpenEditForm(product);
+        } else {
+            if (expired) {
+                showToast.warning("Produto vencido! Atualize a data de validade para reativar.");
+                handleOpenEditForm(product);
+            } else {
+                await ativarProduto(product);
+                carregarProdutos();
+            }
         }
     };
 
@@ -172,10 +147,7 @@ const ProductManagement: React.FC = () => {
                     <Package className="w-6 h-6 mr-2 text-green-600" />
                     Produtos
                 </h1>
-                <button
-                    onClick={handleOpenCreateForm}
-                    className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center justify-center hover:bg-green-700 transition-colors shadow-sm w-full sm:w-auto"
-                >
+                <button onClick={handleOpenCreateForm} className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center justify-center hover:bg-green-700 transition-colors shadow-sm w-full sm:w-auto">
                     <Plus className="h-5 w-5 mr-2" />
                     Adicionar Produto
                 </button>
@@ -191,25 +163,12 @@ const ProductManagement: React.FC = () => {
                         <div className="divide-y divide-gray-200 dark:divide-gray-700 lg:hidden">
                             {listaProdutos.map((product) => {
                                 const expired = isExpired(product.dataValidade);
-                                const lowStock = product.estoque ? product.estoque.quantidadeAtual <= 5 : false;
-                                const isActuallyActive = product.ativo && !lowStock;
-                                const canReactivate = !lowStock;
                                 return (
-                                    <div
-                                        key={product.id}
-                                        className={`p-4 ${!isActuallyActive ? 'opacity-60 bg-gray-50 dark:bg-gray-700/50' : 'bg-white dark:bg-gray-800'} hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer`}
-                                        onClick={() => handleOpenDetailsModal(product)}
-                                    >
+                                    <div key={product.id} className={`p-4 ${!product.ativo ? 'opacity-60 bg-gray-50 dark:bg-gray-700/50' : 'bg-white dark:bg-gray-800'} hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer`} onClick={() => handleOpenDetailsModal(product)}>
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center">
                                                 <div className="flex-shrink-0 h-10 w-10">
-                                                    {product.imagemUrl ? (
-                                                        <img className="h-10 w-10 rounded-full object-cover" src={product.imagemUrl} alt={product.nome} />
-                                                    ) : (
-                                                        <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-400">
-                                                            <Package size={20} />
-                                                        </div>
-                                                    )}
+                                                    {product.imagemUrl ? <img className="h-10 w-10 rounded-full object-cover" src={product.imagemUrl} alt={product.nome} /> : <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-400"><Package size={20} /></div>}
                                                 </div>
                                                 <div className="ml-3">
                                                     <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{product.nome}</p>
@@ -217,139 +176,79 @@ const ProductManagement: React.FC = () => {
                                                 </div>
                                             </div>
                                             <div className="flex items-center space-x-3" onClick={stopPropagation}>
-                                                <button onClick={() => handleOpenEditForm(product)} className="text-indigo-600 dark:text-indigo-400" title="Editar">
-                                                    <Edit className="h-5 w-5" />
-                                                </button>
-                                                <button
-                                                    onClick={(e) => handleActionButtonClick(e, product, isActuallyActive, canReactivate)}
-                                                    className={`transition-colors
-                                                    ${isActuallyActive ? 'text-red-600 dark:text-red-400' :(canReactivate ? 'text-green-600 dark:text-green-400' : 'text-gray-400 cursor-not-allowed')
-                                                    }`}
-                                                    title={isActuallyActive ? "Desativar" : (!canReactivate ? "Estoque crítico" : "Reativar")}
-                                                    disabled={!isActuallyActive && !canReactivate}>
-                                                    {isActuallyActive ? <Trash2 className="h-5 w-5" /> : <RefreshCw className="h-5 w-5" />}
+                                                <button onClick={() => handleOpenEditForm(product)} className="text-indigo-600 dark:text-indigo-400" title="Editar"><Edit className="h-5 w-5" /></button>
+                                                <button onClick={(e) => handleActionButtonClick(e, product)} className={`transition-colors ${product.ativo ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`} title={product.ativo ? "Desativar" : (expired ? "Vencido" : "Reativar")}>
+                                                    {product.ativo ? <Trash2 className="h-5 w-5" /> : <RefreshCw className="h-5 w-5" />}
                                                 </button>
                                             </div>
                                         </div>
-                                        < div className="mt-2 space-y-2" >
-                                            < div className="flex justify-between text-xs" >
-                                                < span className="text-gray-500 dark:text-gray-400 flex items-center" > <DollarSign className="w-4 h-4 mr-1" /> {formatCurrency(product.precoVenda)}</span>
+                                        <div className="mt-2 space-y-2">
+                                            <div className="flex justify-between text-xs">
+                                                <span className="text-gray-500 dark:text-gray-400 flex items-center"><DollarSign className="w-4 h-4 mr-1" /> {formatCurrency(product.precoVenda)}</span>
                                                 {renderEstoque(product, true)}
                                             </div>
                                             <div className="flex justify-between text-xs">
-                                                {expired && (
-                                                    <span className="text-red-600 dark:text-red-400 font-semibold flex items-center">
-                                                        <AlertCircle className="w-4 h-4 mr-1" />
-                                                        Vencido: {product.dataValidade ? formatDate(product.dataValidade) : '-'}
-                                                    </span>
-                                                )}
-                                                <span className="ml-auto">{renderStatus(product, lowStock)}</span>
+                                                {expired && <span className="text-red-600 dark:text-red-400 font-semibold flex items-center"><AlertCircle className="w-4 h-4 mr-1" /> Vencido: {product.dataValidade ? formatDate(product.dataValidade) : '-'}</span>}
+                                                <span className="ml-auto">{renderStatus(product)}</span>
                                             </div>
                                         </div>
                                     </div>
                                 );
-
                             })}
-                        </div >
+                        </div>
 
-                        < table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 hidden lg:table" >
-                            < thead className="bg-gray-50 dark:bg-gray-700" >
+                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 hidden lg:table">
+                            <thead className="bg-gray-50 dark:bg-gray-700">
                                 <tr>
-                                    < th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" > Imagem</th >
-                                    < th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" > Nome</th >
-                                    < th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" > Categoria</th >
-                                    < th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" > Preço Venda</th >
-                                    < th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" > Estoque</th >
-                                    < th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" > Validade</th >
-                                    < th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" > Status</th >
-                                    < th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" > Ações</th >
-                                </tr >
-                            </thead >
-                            < tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700" >
-                                {
-                                    listaProdutos.map((product) => {
-                                        const expired = isExpired(product.dataValidade);
-                                        const lowStock = product.estoque ? product.estoque.quantidadeAtual <= 5 : false;
-                                        const isActuallyActive = product.ativo && !lowStock;
-                                        const canReactivate = !lowStock;
-                                        return (
-                                            < tr
-                                                key={product.id}
-                                                className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer ${!isActuallyActive ? 'opacity-60 bg-gray-50 dark:bg-gray-700/50' : ''}`
-                                                }
-                                                onClick={() => handleOpenDetailsModal(product)}
-                                            >
-                                                < td className="px-6 py-4 whitespace-nowrap" >
-                                                    < div className="flex-shrink-0 h-10 w-10" >
-                                                        {
-                                                            product.imagemUrl ? (
-                                                                < img className="h-10 w-10 rounded-full object-cover" src={product.imagemUrl} alt={product.nome} />
-                                                            ) : (
-                                                                < div className={`h-10 w-10 rounded-full ${!isActuallyActive ? 'bg-gray-300' : 'bg-gray-200'} dark:bg-gray-600 flex items-center justify-center text-gray-400`
-                                                                }>
-                                                                    < Package size={20} />
-                                                                </div >
-                                                            )}
-                                                    </div >
-                                                </td >
-                                                < td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100" > {product.nome}</td >
-                                                < td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden md:table-cell" > {product.categoria?.nome ?? 'N/A'}</td >
-                                                < td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200 font-semibold" > {formatCurrency(product.precoVenda)}</td >
-                                                < td className="px-6 py-4 whitespace-nowrap text-sm" > {renderEstoque(product)}</td >
-                                                < td className={`px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell ${expired ? 'text-red-600 dark:text-red-400 font-semibold' : ''}`}>
-                                                    {expired && <AlertCircle className="w-4 h-4 inline mr-1.5" />}
-                                                    {product.dataValidade ? formatDate(product.dataValidade) : '-'}
-                                                </td >
-                                                < td className="px-6 py-4 whitespace-nowrap text-center" > {renderStatus(product, lowStock)}</td >
-                                                < td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium" onClick={stopPropagation} >
-                                                    < div className="flex items-center justify-end space-x-3" >
-                                                        < button onClick={() => handleOpenEditForm(product)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors" title="Editar produto" >
-                                                            < Edit className="h-5 w-5" />
-                                                        </button >
-                                                        < button
-                                                            onClick={(e) => handleActionButtonClick(e, product, isActuallyActive, canReactivate)}
-                                                            className={`transition-colors
-       	 	 	 	 	 	 	 	 	 	  	 ${isActuallyActive ? 'text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300' :
-                                                                    (canReactivate ? 'text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300' : 'text-gray-400 cursor-not-allowed')
-                                                                }`}
-                                                            title={isActuallyActive ? "Desativar produto" : (!canReactivate ? "Aumente o estoque para reativar" : "Reativar produto")}
-                                                            disabled={!isActuallyActive && !canReactivate}
-                                                        >
-                                                            {isActuallyActive ? <Trash2 className="h-5 w-5" /> : <RefreshCw className="h-5 w-5" />}
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Imagem</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Nome</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Categoria</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Preço Venda</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Estoque</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Validade</th>
+                                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                {listaProdutos.map((product) => {
+                                    const expired = isExpired(product.dataValidade);
+                                    return (
+                                        <tr key={product.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer ${!product.ativo ? 'opacity-60 bg-gray-50 dark:bg-gray-700/50' : ''}`} onClick={() => handleOpenDetailsModal(product)}>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex-shrink-0 h-10 w-10">
+                                                    {product.imagemUrl ? <img className="h-10 w-10 rounded-full object-cover" src={product.imagemUrl} alt={product.nome} /> : <div className={`h-10 w-10 rounded-full ${!product.ativo ? 'bg-gray-300' : 'bg-gray-200'} dark:bg-gray-600 flex items-center justify-center text-gray-400`}><Package size={20} /></div>}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{product.nome}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden md:table-cell">{product.categoria?.nome ?? 'N/A'}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200 font-semibold">{formatCurrency(product.precoVenda)}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm">{renderEstoque(product)}</td>
+                                            <td className={`px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell ${expired ? 'text-red-600 dark:text-red-400 font-semibold' : ''}`}>
+                                                {expired && <AlertCircle className="w-4 h-4 inline mr-1.5" />}
+                                                {product.dataValidade ? formatDate(product.dataValidade) : '-'}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center">{renderStatus(product)}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium" onClick={stopPropagation}>
+                                                <div className="flex items-center justify-end space-x-3">
+                                                    <button onClick={() => handleOpenEditForm(product)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors" title="Editar produto"><Edit className="h-5 w-5" /></button>
+                                                    <button onClick={(e) => handleActionButtonClick(e, product)} className={`transition-colors ${product.ativo ? 'text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300' : 'text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300'}`} title={product.ativo ? "Desativar" : (expired ? "Vencido" : "Reativar")}>
+                                                        {product.ativo ? <Trash2 className="h-5 w-5" /> : <RefreshCw className="h-5 w-5" />}
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </>
                 )}
             </div>
 
-            <ProductForm
-                isOpen={isFormOpen}
-                onClose={handleCloseForm}
-                onSubmit={handleFormSubmit}
-                produtoIdToEdit={editingProductId}
-            />
-
-            <ConfirmationModal
-                isOpen={isConfirmModalOpen}
-                onClose={handleCloseConfirmModal}
-                onConfirm={handleConfirmDeactivate}
-                title="Confirmar Desativação"
-                message={`Tem certeza que deseja DESATIVAR o produto "${productToDeactivate?.nome}" ? Ele não aparecerá mais para venda.`}
-                confirmText="Desativar"
-                isLoading={isDeactivatingLoading}
-            />
-
-            <ProdutoDetailsModal
-                isOpen={isDetailsModalOpen}
-                onClose={handleCloseDetailsModal}
-                produto={selectedProduct}
-            />
+            <ProductForm isOpen={isFormOpen} onClose={handleCloseForm} onSubmit={handleFormSubmit} produtoIdToEdit={editingProductId} />
+            <ConfirmationModal isOpen={isConfirmModalOpen} onClose={handleCloseConfirmModal} onConfirm={handleConfirmDeactivate} title="Confirmar Desativação" message={`Tem certeza que deseja DESATIVAR o produto "${productToDeactivate?.nome}"? Ele não aparecerá mais para venda.`} confirmText="Desativar" isLoading={isDeactivatingLoading} />
+            <ProdutoDetailsModal isOpen={isDetailsModalOpen} onClose={handleCloseDetailsModal} produto={selectedProduct} />
         </Layout>
     );
 };
