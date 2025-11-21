@@ -1,7 +1,6 @@
 import api from './api';
 import { Faq } from '../types';
 import axios, { AxiosError } from 'axios';
-import { showToast } from '../components/Toast'
 
 type FaqData = Omit<Faq, 'id' | 'createdAt' | 'updatedAt'>;
 
@@ -32,7 +31,7 @@ export const faqService = {
 
   listarTodos: async (): Promise<Faq[]> => {
     try {
-      const response = await api.get<Faq[]>('/faq/ativos');
+      const response = await api.get<Faq[]>('/faq');
       return response.data;
     } catch (error) {
       throw new Error(handleError(error, 'Não foi possível carregar os FAQs.'));
@@ -59,10 +58,9 @@ export const faqService = {
 
   remover: async (id: number): Promise<void> => {
     try {
-      console.warn(`API endpoint DELETE /faq/${id} não implementado.`);
-      showToast.warning('Função de deletar não implementada no backend.');
+      await api.delete(`/faq/${id}`);
     } catch (error) {
-      throw new Error(handleError(error, 'Não foi possível remover o FAQ.'));
+      throw new Error(handleError(error, 'Não foi possível remover/inativar o FAQ.'));
     }
   }
 };
