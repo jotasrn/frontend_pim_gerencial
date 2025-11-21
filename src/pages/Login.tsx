@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Leaf, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { formatApiError } from '../utils/apiHelpers';
-import { Navigate, Link } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const Login: React.FC = () => {
@@ -101,14 +101,6 @@ const Login: React.FC = () => {
               >
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-end">
-            <div className="text-sm">
-              <Link to="/esqueci-senha" className="font-medium text-green-600 hover:text-green-500 dark:text-green-400 dark:hover:text-green-300">
-                Esqueci minha senha
-              </Link>
             </div>
           </div>
 

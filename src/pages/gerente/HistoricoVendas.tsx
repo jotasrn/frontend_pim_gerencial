@@ -52,7 +52,6 @@ const KpiCard: React.FC<KpiCardProps> = ({ title, value, icon, isLoading, isPerc
     );
 };
 
-// --- (HELPER) Funções de Data e Cálculo ---
 const getDefaultDateRange = () => {
     const endDate = new Date();
     const startDate = new Date();
@@ -132,11 +131,9 @@ const SalesHistory: React.FC = () => {
         setFiltrosAtivos({ dataInicio, dataFim });
     };
 
-    // **** CORREÇÃO DA LÓGICA DE DOWNLOAD ****
     const handleDownloadReport = () => {
         setIsReportLoading(true);
 
-        // 1. Usa os dados já filtrados (da variável 'vendas')
         if (vendas.length === 0) {
             showToast.info("Nenhuma venda encontrada no período selecionado para gerar o relatório.");
             setIsReportLoading(false);
@@ -144,7 +141,6 @@ const SalesHistory: React.FC = () => {
         }
 
         try {
-            // 2. Usa as datas do filtro para o nome do arquivo
             const periodo = `${formatDate(dataInicio)}_a_${formatDate(dataFim)}`;
             generateVendasReport(vendas, periodo);
         } catch (err: unknown) {
@@ -154,7 +150,6 @@ const SalesHistory: React.FC = () => {
             setIsReportLoading(false);
         }
     };
-    // **** FIM DA CORREÇÃO ****
 
     const salesLineChartData = useMemo(() => {
         const salesByDate = new Map<string, number>();

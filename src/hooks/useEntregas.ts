@@ -16,17 +16,16 @@ interface UseEntregasReturn {
 }
 
 export const useEntregas = (filtrosIniciais: FiltrosEntregas = {}): UseEntregasReturn => {
-
   const [entregas, setEntregas] = useState<Entrega[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [filtros, setFiltros] = useState<FiltrosEntregas>(filtrosIniciais);
   const { usuario } = useAuth();
 
-  const carregarEntregas = useCallback(async () => {
+  const carregarEntregas = useCallback(async (isAutoRefresh = false) => {
     if (!usuario) return;
 
-    setLoading(true);
+    if (!isAutoRefresh) setLoading(true);
     setError(null);
     try {
       let dados: Entrega[];
@@ -37,11 +36,13 @@ export const useEntregas = (filtrosIniciais: FiltrosEntregas = {}): UseEntregasR
       }
       setEntregas(dados);
     } catch (err) {
-      const errorMessage = (err as Error).message;
-      setError(errorMessage);
-      showToast.error(errorMessage);
+      if (!isAutoRefresh) {
+          const errorMessage = (err as Error).message;
+          setError(errorMessage);
+          showToast.error(errorMessage);
+      }
     } finally {
-      setLoading(false);
+      if (!isAutoRefresh) setLoading(false);
     }
   }, [filtros, usuario]);
 
@@ -50,7 +51,6 @@ export const useEntregas = (filtrosIniciais: FiltrosEntregas = {}): UseEntregasR
       showToast.error('Apenas gerentes podem associar entregadores.');
       return false;
     }
-
     setLoading(true);
     try {
       await entregaService.associarEntregador(entregaId, entregadorId);
@@ -72,7 +72,6 @@ export const useEntregas = (filtrosIniciais: FiltrosEntregas = {}): UseEntregasR
       showToast.error('Apenas entregadores podem atualizar o status.');
       return false;
     }
-
     setLoading(true);
     try {
       await entregaService.atualizarStatus(entregaId, data);
@@ -95,9 +94,16 @@ export const useEntregas = (filtrosIniciais: FiltrosEntregas = {}): UseEntregasR
     }
   };
 
+  // Efeito para Polling (Atualização Automática)
   useEffect(() => {
     if (usuario) {
-      carregarEntregas();
+      carregarEntregas(); // Load inicial
+
+      const intervalId = setInterval(() => {
+        carregarEntregas(true); // Auto-refresh silencioso
+      }, 30000); // 30 segundos
+
+      return () => clearInterval(intervalId);
     }
   }, [carregarEntregas, usuario]);
 

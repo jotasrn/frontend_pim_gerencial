@@ -1,7 +1,10 @@
 import React, { ReactNode, useState } from 'react';
 import { NavLink, useNavigate, Link } from 'react-router-dom';
-// 1. IMPORTAR PieChart
-import { Leaf, Users, Tag, BarChart2, User, LogOut, Bell, LayoutGrid, Clock, UserCircle, Truck, HelpCircle, BookOpen, Package, Menu, X, Archive, ShoppingCart, PieChart } from 'lucide-react';
+import {
+  Leaf, Users, Tag, BarChart2, User, LogOut, Bell, LayoutGrid, Clock,
+  UserCircle, Truck, HelpCircle, BookOpen, Package, Menu, X, Archive,
+  ShoppingCart, PieChart, MapPin
+} from 'lucide-react';
 import { useAuth, TipoUsuario } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificacaoContext';
 import NotificationModal from './modals/NotificacaoModal';
@@ -33,7 +36,8 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
         return [
           { nome: 'Dashboard', icone: <BarChart2 size={20} />, path: '/gerente', end: true },
           { nome: 'Vendas', icone: <ShoppingCart size={20} />, path: '/gerente/vendas' },
-          { nome: 'Relatórios', icone: <PieChart size={20} />, path: '/gerente/relatorios' }, // 2. ADICIONAR ITEM
+          { nome: 'Relatórios', icone: <PieChart size={20} />, path: '/gerente/relatorios' },
+          { nome: 'Monitor Entregas', icone: <MapPin size={20} />, path: '/gerente/entregas' }, 
           { nome: 'Usuários', icone: <Users size={20} />, path: '/gerente/usuarios' },
           { nome: 'Promoções', icone: <Tag size={20} />, path: '/gerente/promocoes' },
           { nome: 'Clientes', icone: <User size={20} />, path: '/gerente/clientes' },
@@ -176,7 +180,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
                 <div className='flex items-center'>
                   <Link to="/perfil" className="hidden sm:block mr-2 font-medium text-gray-700 dark:text-gray-200 hover:text-green-600 dark:hover:text-green-400">
                     {usuario?.nomeCompleto || 'Usuário'}
-                  </Link>
+                    t </Link>
                   {usuario?.permissao && (
                     <span className="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-full capitalize select-none">
                       {getRoleLabel(usuario.permissao)}

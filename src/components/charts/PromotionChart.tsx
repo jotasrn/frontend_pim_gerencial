@@ -23,7 +23,6 @@ ChartJS.register(
   Legend
 );
 
-// --- Tipagem Específica dos Dados ---
 type BarChartDataType = ChartData<'bar', number[], string>;
 type PieChartDataType = ChartData<'pie', number[], string>;
 

@@ -6,7 +6,7 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import { Link } from 'react-router-dom';
 import { formatDateTime } from '../../utils/apiHelpers';
 
-const Entregador: React.FC = () => {
+const EntregadorDashboard: React.FC = () => {
   const { entregas, loading, error } = useMinhasEntregas();
 
   const stats = useMemo(() => {
@@ -27,15 +27,15 @@ const Entregador: React.FC = () => {
   const getStatusStyle = (status: string) => {
     switch (status) {
       case 'AGUARDANDO_COLETA':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
       case 'EM_ROTA':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
       case 'ENTREGUE':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
       case 'PROBLEMA':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
     }
   };
 
@@ -43,21 +43,21 @@ const Entregador: React.FC = () => {
     <Layout title="Dashboard do Entregador">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {stats.map((stat) => (
-          <div key={stat.id} className="bg-white rounded-lg shadow p-4">
+          <div key={stat.id} className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 transition-colors">
             <div className="flex items-center">
-              <div className="p-3 rounded-full bg-gray-50">{stat.icon}</div>
+              <div className="p-3 rounded-full bg-gray-50 dark:bg-gray-700">{stat.icon}</div>
               <div className="ml-3">
-                <p className="text-xs font-medium text-gray-500">{stat.name}</p>
-                <p className="text-xl font-semibold text-gray-900">{stat.value}</p>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{stat.name}</p>
+                <p className="text-xl font-semibold text-gray-900 dark:text-gray-100">{stat.value}</p>
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="px-4 py-4 sm:px-6">
-          <h2 className="text-lg font-medium text-gray-800">Minhas Entregas Ativas</h2>
+      <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+        <div className="px-4 py-4 sm:px-6 border-b dark:border-gray-700">
+          <h2 className="text-lg font-medium text-gray-800 dark:text-gray-100">Minhas Entregas Ativas</h2>
         </div>
         
         {loading && (
@@ -65,19 +65,19 @@ const Entregador: React.FC = () => {
         )}
         
         {!loading && error && (
-             <div className="text-center p-6 text-red-600 bg-red-50">
+             <div className="text-center p-6 text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-300">
                 <AlertCircle className="mx-auto h-8 w-8 mb-2" />
                 <p>Erro ao carregar entregas: {error}</p>
             </div>
         )}
         
         {!loading && !error && (
-            <div className="divide-y divide-gray-200">
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
                 {entregas.length === 0 ? (
-                    <p className="text-center py-10 text-gray-500">Você não possui entregas ativas no momento.</p>
+                    <p className="text-center py-10 text-gray-500 dark:text-gray-400">Você não possui entregas ativas no momento.</p>
                 ) : (
                     entregas.map((entrega) => (
-                        <Link to={`/entregador/entrega/${entrega.id}`} key={entrega.id} className="block p-4 sm:p-6 hover:bg-gray-50 transition-colors">
+                        <Link to={`/entregador/entrega/${entrega.id}`} key={entrega.id} className="block p-4 sm:p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
                                 <div className="flex items-center mb-3 sm:mb-0">
                                     <div className="flex-shrink-0">
@@ -86,13 +86,13 @@ const Entregador: React.FC = () => {
                                         </span>
                                     </div>
                                     <div className="ml-4">
-                                        <p className="text-sm font-medium text-gray-900">Pedido #{entrega.venda?.id ?? 'N/A'}</p>
-                                        <p className="text-sm text-gray-500">{entrega.venda?.enderecoEntrega?.rua ?? 'Endereço'}, {entrega.venda?.enderecoEntrega?.numero ?? 'S/N'}</p>
-                                        <p className="text-xs text-gray-500">{entrega.venda?.enderecoEntrega?.bairro}, {entrega.venda?.enderecoEntrega?.cidade}</p>
+                                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Pedido #{entrega.venda?.id ?? 'N/A'}</p>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">{entrega.venda?.enderecoEntrega?.rua ?? 'Endereço'}, {entrega.venda?.enderecoEntrega?.numero ?? 'S/N'}</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">{entrega.venda?.enderecoEntrega?.bairro}, {entrega.venda?.enderecoEntrega?.cidade}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center w-full sm:w-auto justify-end">
-                                    <span className="text-sm text-gray-600">{entrega.venda?.dataHora ? formatDateTime(entrega.venda.dataHora) : '-'}</span>
+                                    <span className="text-sm text-gray-600 dark:text-gray-400">{entrega.venda?.dataHora ? formatDateTime(entrega.venda.dataHora) : '-'}</span>
                                 </div>
                             </div>
                         </Link>
@@ -105,4 +105,4 @@ const Entregador: React.FC = () => {
   );
 };
 
-export default Entregador;
+export default EntregadorDashboard;

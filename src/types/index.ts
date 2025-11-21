@@ -9,7 +9,6 @@ export interface Usuario {
   permissao: TipoUsuario;
   ativo?: boolean;
   googleId?: string;
-  is2faEnabled?: boolean;
   tipoVeiculo?: string;
   placaVeiculo?: string;
 }
@@ -252,6 +251,9 @@ export interface Duvida {
   status: string;
   createdAt: string;
   updatedAt: string;
+  resposta?: string;
+  dataResposta?: string;
+  respondente?: Usuario;
 }
 
 export interface DuvidaResposta {

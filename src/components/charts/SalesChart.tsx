@@ -12,10 +12,10 @@ import {
   Legend,
   ChartData,
   TooltipItem,
-  Filler // Adicionado para preenchimento do gráfico de linha
+  Filler 
 } from 'chart.js';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
-import { useTheme } from '../../contexts/TemaContext'; // Importe seu hook de tema
+import { useTheme } from '../../contexts/TemaContext';
 
 ChartJS.register(
   CategoryScale,
@@ -27,7 +27,7 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler // Registre o Filler
+  Filler 
 );
 
 // --- Tipagem Específica dos Dados ---

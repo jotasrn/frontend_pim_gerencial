@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react'; // Importar useCallback, useState, useEffect
+import React, { useMemo, useState, useEffect } from 'react';
 import Layout from '../../components/Layout';
 import { Users, ShoppingBag, Tag, ShoppingCart, Truck, AlertCircle } from 'lucide-react';
 import { SalesLineChart, SalesByCategoryChart, TopProductsChart } from '../../components/charts/SalesChart';
@@ -7,15 +7,14 @@ import { LossByReasonChart } from '../../components/charts/LossChart';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useRelatorios } from '../../hooks/useRelatorios';
 import { formatCurrency, formatDateTime, formatDate } from '../../utils/apiHelpers';
-import { Venda, FiltrosRelatorios } from '../../types'; // Importar FiltrosRelatorios
+import { Venda, FiltrosRelatorios } from '../../types';
 
 const CHART_COLORS = ['#10B981', '#F59E0B', '#EF4444', '#3B82F6', '#6366F1', '#EC4899'];
 
-// Helper para datas padrão
 const getDefaultDateRange = () => {
   const endDate = new Date();
   const startDate = new Date();
-  startDate.setDate(endDate.getDate() - 7); // Padrão 7 dias
+  startDate.setDate(endDate.getDate() - 7);
   return {
     dataInicio: startDate.toISOString().split('T')[0],
     dataFim: endDate.toISOString().split('T')[0],
@@ -42,7 +41,6 @@ const ManagerDashboard: React.FC = () => {
     carregarRelatorios(filtros);
   }, [carregarRelatorios, filtros]);
 
-  // Função para o botão "Tentar Novamente"
   const handleRetry = () => {
     carregarRelatorios(filtros);
   };
@@ -128,7 +126,7 @@ const ManagerDashboard: React.FC = () => {
           <p className="font-semibold mb-2">Erro ao carregar dados do dashboard:</p>
           <p className="text-sm mb-4">{error}</p>
           <button
-            onClick={handleRetry} // CORREÇÃO: Chamar a função wrapper
+            onClick={handleRetry} 
             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
           >
             Tentar Novamente

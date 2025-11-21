@@ -18,6 +18,16 @@ const handleError = (error: unknown, defaultMessage: string): string => {
 };
 
 export const duvidaService = {
+  listar: async (status: string = 'ABERTO'): Promise<Duvida[]> => {
+    try {
+      const endpoint = status === 'RESPONDIDO' ? '/duvidas/publicas' : '/duvidas/pendentes';
+      const response = await api.get<Duvida[]>(endpoint);
+      return response.data;
+    } catch (error) {
+      throw new Error(handleError(error, 'Não foi possível carregar as dúvidas.'));
+    }
+  },
+
   listarPendentes: async (): Promise<Duvida[]> => {
     try {
       const response = await api.get<Duvida[]>('/duvidas/pendentes');
@@ -33,6 +43,23 @@ export const duvidaService = {
       return response.data;
     } catch (error) {
       throw new Error(handleError(error, 'Não foi possível enviar a resposta.'));
+    }
+  },
+
+  editar: async (id: number, respostaData: DuvidaRespostaRequest): Promise<DuvidaResposta> => {
+    try {
+      const response = await api.put<DuvidaResposta>(`/duvidas/${id}/resposta`, respostaData);
+      return response.data;
+    } catch (error) {
+      throw new Error(handleError(error, 'Não foi possível editar a resposta.'));
+    }
+  },
+
+  remover: async (id: number): Promise<void> => {
+    try {
+      await api.delete(`/duvidas/${id}`);
+    } catch (error) {
+      throw new Error(handleError(error, 'Não foi possível remover a dúvida.'));
     }
   },
 };

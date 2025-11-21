@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import api from '../services/api';
 
+
 export type TipoUsuario = 'gerente' | 'entregador' | 'estoquista';
 
 export interface Usuario {
@@ -8,7 +9,6 @@ export interface Usuario {
   nomeCompleto: string;
   email: string;
   permissao: TipoUsuario;
-  is2faEnabled?: boolean;
 }
 
 interface TipoAuthContext {

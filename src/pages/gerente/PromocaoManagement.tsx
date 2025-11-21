@@ -17,7 +17,7 @@ const PromotionManagement: React.FC = () => {
     atualizarPromocao,
     desativarPromocao,
     carregarPromocoes,
-  } = usePromocoes({ status: 'all' }); // 1. Buscar TODAS as promoções
+  } = usePromocoes({ status: 'all' });
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPromotion, setEditingPromotion] = useState<Promocao | null>(null);
@@ -31,12 +31,10 @@ const PromotionManagement: React.FC = () => {
   const [selectedPromocaoId, setSelectedPromocaoId] = useState<number | null>(null);
   const [showInactive, setShowInactive] = useState(false);
 
-  // 2. Filtrar localmente com base no estado 'showInactive'
   const promocoesParaExibir = useMemo(() => {
     return promocoes.filter(p => p.ativa === !showInactive);
   }, [promocoes, showInactive]);
 
-  // Este useEffect não é mais necessário para filtros, apenas para recarregar
   useEffect(() => {
     const checkReload = () => {
       if (!isFormOpen && shouldReloadList.current) {
@@ -99,7 +97,6 @@ const PromotionManagement: React.FC = () => {
     if (modalAction === 'deactivate') {
       success = await desativarPromocao(promotionToConfirm.id);
     } else {
-      // Reativar abrindo o formulário de edição
       handleOpenEditForm(promotionToConfirm);
       success = true;
     }

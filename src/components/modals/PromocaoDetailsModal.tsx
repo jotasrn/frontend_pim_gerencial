@@ -4,7 +4,6 @@ import { Promocao, Produto } from '../../types';
 import { promocaoService } from '../../services/promocaoService';
 import { formatCurrency, formatDate } from '../../utils/apiHelpers';
 import LoadingSpinner from '../LoadingSpinner';
-import { Link } from 'react-router-dom';
 
 interface ModalProps {
     isOpen: boolean;
@@ -121,9 +120,6 @@ const PromotionDetailsModal: React.FC<ModalProps> = ({ isOpen, onClose, promocao
                                                         <span className="text-xs text-gray-500 dark:text-gray-400">{formatCurrency(produto.precoVenda)}</span>
                                                     </div>
                                                 </div>
-                                                <Link to="/estoquista/produtos" onClick={onClose} className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
-                                                    Ver Produto
-                                                </Link>
                                             </li>
                                         ))}
                                         </ul>
