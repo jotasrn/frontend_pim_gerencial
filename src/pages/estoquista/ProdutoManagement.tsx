@@ -251,7 +251,6 @@ const ProductManagement: React.FC = () => {
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {/* Busca por Nome */}
                         <div className="relative">
                             <label className="block text-xs font-medium text-gray-500 mb-1">Buscar Nome</label>
                             <div className="relative">
@@ -268,7 +267,6 @@ const ProductManagement: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Filtro Categoria */}
                         <div>
                             <label className="block text-xs font-medium text-gray-500 mb-1">Categoria</label>
                             <select
@@ -283,7 +281,6 @@ const ProductManagement: React.FC = () => {
                             </select>
                         </div>
 
-                        {/* Filtro Estoque */}
                         <div>
                             <label className="block text-xs font-medium text-gray-500 mb-1">Status Estoque</label>
                             <select
@@ -298,7 +295,6 @@ const ProductManagement: React.FC = () => {
                             </select>
                         </div>
 
-                        {/* Filtro Validade */}
                         <div>
                             <label className="block text-xs font-medium text-gray-500 mb-1">Validade</label>
                             <select
@@ -312,7 +308,6 @@ const ProductManagement: React.FC = () => {
                             </select>
                         </div>
 
-                        {/* Filtro Preço (Min/Max) */}
                         <div className="col-span-1 md:col-span-2 lg:col-span-4 flex gap-4 items-end border-t border-gray-100 dark:border-gray-700 pt-3 mt-1">
                             <div className="w-1/2 md:w-1/4">
                                 <label className="block text-xs font-medium text-gray-500 mb-1">Preço Min</label>
@@ -352,7 +347,6 @@ const ProductManagement: React.FC = () => {
                 ) : listaProdutos.length === 0 && !loadingList ? (
                     <p className="text-center py-10 text-gray-500 dark:text-gray-400">Nenhum produto cadastrado.</p>
                 ) : produtosFiltrados.length === 0 ? ( 
-                    // --- NOVO: Feedback se filtro não retornar nada ---
                     <div className="text-center py-10">
                         <p className="text-gray-500 dark:text-gray-400 mb-2">Nenhum produto encontrado com os filtros atuais.</p>
                         <button onClick={limparFiltros} className="text-green-600 hover:underline text-sm font-medium">Limpar Filtros</button>
@@ -360,7 +354,6 @@ const ProductManagement: React.FC = () => {
                 ) : (
                     <>
                         <div className="divide-y divide-gray-200 dark:divide-gray-700 lg:hidden">
-                            {/* --- MUDANÇA: Usando produtosFiltrados ao invés de listaProdutos --- */}
                             {produtosFiltrados.map((product) => {
                                 const expired = isExpired(product.dataValidade);
                                 return (
@@ -411,8 +404,7 @@ const ProductManagement: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                {/* --- MUDANÇA: Usando produtosFiltrados ao invés de listaProdutos --- */}
-                                {produtosFiltrados.map((product) => {
+                               {produtosFiltrados.map((product) => {
                                     const expired = isExpired(product.dataValidade);
                                     return (
                                         <tr key={product.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer ${!product.ativo ? 'opacity-60 bg-gray-50 dark:bg-gray-700/50' : ''}`} onClick={() => handleOpenDetailsModal(product)}>
